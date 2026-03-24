@@ -5,17 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Gerenciador de Carradas, Abastecimentos e Produção">
     <title>Gestor de Frota & Abastecimentos 2025</title>
-    
-    <!-- Bibliotecas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: linear-gradient(135deg, #1e3c2c 0%, #2d5a3b 100%); min-height: 100vh; padding: 20px; }
         .container { max-width: 1400px; margin: 0 auto; background: rgba(255,255,255,0.97); border-radius: 15px; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border-top: 6px solid #f39c12; }
         h1 { color: #1e3c2c; font-size: 2.5em; margin-bottom: 20px; text-align: center; text-transform: uppercase; letter-spacing: 4px; text-shadow: 3px 3px 0 #f39c12; }
         h2 { color: #2d5a3b; margin: 30px 0 20px; border-left: 6px solid #f39c12; padding-left: 15px; }
-        
+
         /* Dashboard */
         .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap: 20px; margin-bottom: 30px; }
         .card-stats { background: linear-gradient(135deg, #ecf0f1, #d5dbdb); border-radius: 12px; padding: 20px; text-align: center; border-bottom: 5px solid #f39c12; transition: transform 0.3s; }
@@ -52,6 +49,7 @@
         .form-group label { display: block; margin-bottom: 8px; font-weight: 800; color: #1e3c2c; text-transform: uppercase; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 3px solid #bdc3c7; border-radius: 10px; font-size: 1em; }
         .form-group input:focus, .form-group select:focus { outline: none; border-color: #f39c12; }
+        .valor-total-calc { background: #1e3c2c; color: #f39c12; padding: 12px; border-radius: 10px; font-size: 1.4em; font-weight: 900; text-align: center; margin-top: 10px; letter-spacing: 1px; }
 
         /* Tabelas */
         .tabela-container { overflow-x: auto; margin: 20px 0; background: white; border-radius: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); border: 2px solid #2d5a3b; }
@@ -73,9 +71,9 @@
         .tipo-etanol { background: #27ae60; color: white; }
         .tipo-oleo { background: #7f8c8d; color: white; }
 
-        /* Cards */
+        /* Cards Dashboard */
         .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px,1fr)); gap: 25px; margin: 30px 0; }
-        .info-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 15px 30px rgba(0,0,0,0.2); border-left: 8px solid #f39c12; border-bottom: 4px solid #2d5a3b; }
+        .info-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 15px 30px rgba(0,0,0,0.2); border-left: 8px solid #f39c12; border-bottom: 4px solid #2d5a3b; transition: transform 0.3s; }
         .info-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(243,156,18,0.3); }
         .info-card h4 { color: #1e3c2c; font-size: 1.6em; margin-bottom: 15px; border-bottom: 3px solid #f39c12; padding-bottom: 10px; }
         .info-card .placa-destaque { background: #1e3c2c; color: #f39c12; padding: 12px; border-radius: 10px; font-family: monospace; font-size: 1.6em; text-align: center; letter-spacing: 4px; margin: 15px 0; border: 3px solid #f39c12; }
@@ -85,6 +83,11 @@
         .dialog-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30,60,44,0.9); z-index: 1000; }
         .dialog-box { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: white; padding: 35px; border-radius: 20px; max-width: 550px; width: 90%; max-height: 90vh; overflow-y: auto; border-top: 8px solid #f39c12; }
         .dialog-buttons { display: flex; gap: 20px; margin-top: 30px; justify-content: flex-end; }
+
+        /* Toast */
+        .toast { position: fixed; bottom: 30px; right: 30px; background: #27ae60; color: white; padding: 15px 25px; border-radius: 12px; font-weight: 800; font-size: 1.1em; box-shadow: 0 10px 30px rgba(0,0,0,0.4); z-index: 9999; opacity: 0; transform: translateY(20px); transition: all 0.3s; pointer-events: none; }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.error { background: #e74c3c; }
 
         /* Barra de pesquisa */
         .search-bar { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -111,10 +114,13 @@
 <body>
 <div class="container">
     <h1>⛽ GESTOR DE FROTA & ABASTECIMENTOS 2025</h1>
-    
+
+    <!-- Toast de feedback -->
+    <div id="toast" class="toast"></div>
+
     <!-- Filtro de Ano -->
     <div class="ano-filter">
-        <label>📅 Filtrar a partir de:</label>
+        <label>📅 Filtrar por ano:</label>
         <select id="filtroAno">
             <option value="2025">2025</option>
             <option value="2026">2026</option>
@@ -126,11 +132,12 @@
         </select>
         <button class="btn btn-warning" onclick="aplicarFiltroAno()">APLICAR</button>
     </div>
-    
-    <!-- Dashboard -->
+
+    <!-- Dashboard Topo -->
     <div class="dashboard">
         <div class="card-stats"><div class="rotulo">Total Carradas</div><div class="numero" id="totalCarradas">0</div></div>
         <div class="card-stats"><div class="rotulo">Produção Acumulada</div><div class="numero" id="producaoAcumulada">0</div></div>
+        <div class="card-stats"><div class="rotulo">Valor Carradas (R$)</div><div class="numero" id="totalValorCarradas">0</div></div>
         <div class="card-stats"><div class="rotulo">Total Combustível (L)</div><div class="numero" id="totalCombustivel">0</div></div>
         <div class="card-stats"><div class="rotulo">Total Óleo (L)</div><div class="numero" id="totalOleo">0</div></div>
     </div>
@@ -140,18 +147,18 @@
         <div class="admin-header">
             <h3>🔧 CONTROLE DE FROTA</h3>
             <div class="admin-buttons">
-                <button class="btn btn-primary" onclick="mostrarFormulario('carrada')">🚛 NOVA CARRADA</button>
-                <button class="btn btn-success" onclick="mostrarFormulario('motorista')">👤 NOVO MOTORISTA</button>
-                <button class="btn btn-warning" onclick="mostrarFormulario('combustivel')">⛽ ABAST. COMBUSTÍVEL</button>
-                <button class="btn btn-info" onclick="mostrarFormulario('oleo')">🛢️ ABAST. ÓLEO</button>
-                <button class="btn btn-dark" onclick="mostrarFormulario('diaria')">💰 NOVA DIÁRIA</button>
-                <button class="btn btn-excel" onclick="exportarPlanilha()">📊 EXPORTAR EXCEL</button>
-                <button class="btn btn-danger" onclick="mostrarDialogConfirmacao('limparDados')">🗑️ LIMPAR</button>
+                <button class="btn btn-primary"  onclick="mostrarFormulario('carrada')">🚛 NOVA CARRADA</button>
+                <button class="btn btn-success"  onclick="mostrarFormulario('motorista')">👤 NOVO MOTORISTA</button>
+                <button class="btn btn-warning"  onclick="mostrarFormulario('combustivel')">⛽ ABAST. COMBUSTÍVEL</button>
+                <button class="btn btn-info"     onclick="mostrarFormulario('oleo')">🛢️ ABAST. ÓLEO</button>
+                <button class="btn btn-dark"     onclick="mostrarFormulario('diaria')">💰 NOVA DIÁRIA</button>
+                <button class="btn btn-excel"    onclick="exportarPlanilha()">📊 EXPORTAR EXCEL</button>
+                <button class="btn btn-danger"   onclick="pedirConfirmacao('Limpar TODOS os dados?', limparTodosDados)">🗑️ LIMPAR</button>
             </div>
         </div>
 
         <!-- Abas -->
-        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+        <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
             <button class="btn btn-dark" onclick="mostrarAba('carradas')">🚛 CARRADAS</button>
             <button class="btn btn-dark" onclick="mostrarAba('motoristas')">👤 MOTORISTAS</button>
             <button class="btn btn-dark" onclick="mostrarAba('combustivel')">⛽ COMBUSTÍVEL</button>
@@ -161,22 +168,23 @@
             <button class="btn btn-dark" onclick="mostrarAba('dashboard')">📈 DASHBOARD</button>
         </div>
 
-        <!-- Barra de pesquisa -->
+        <!-- Barra de pesquisa global -->
         <div class="search-bar">
-            <input type="text" class="search-input" id="pesquisaGlobal" placeholder="🔍 Pesquisar..." onkeyup="pesquisarGlobal()">
+            <input type="text" class="search-input" id="pesquisaGlobal" placeholder="🔍 Pesquisar..." oninput="aplicarFiltros()">
             <button class="btn btn-dark" onclick="limparPesquisa()">LIMPAR</button>
         </div>
 
-        <!-- Formulários -->
+        <!-- ===== FORMULÁRIOS ===== -->
         <div id="formCarrada" class="form-container">
             <h3 id="tituloFormCarrada">🚛 NOVA CARRADA</h3>
             <input type="hidden" id="carradaId">
             <div class="form-grid">
                 <div class="form-group"><label>Motorista *</label><select id="carradaMotorista" required></select></div>
-                <div class="form-group"><label>Placa *</label><input type="text" id="carradaPlaca" placeholder="AAA-1234" maxlength="8" required></div>
+                <div class="form-group"><label>Placa *</label><input type="text" id="carradaPlaca" placeholder="AAA-1234 ou ABC1D23" maxlength="8" oninput="this.value=this.value.toUpperCase()" required></div>
                 <div class="form-group"><label>Destino *</label><input type="text" id="carradaDestino" required></div>
                 <div class="form-group"><label>Data *</label><input type="date" id="carradaData" required></div>
-                <div class="form-group"><label>Produção *</label><input type="number" id="carradaProducao" min="0" required></div>
+                <div class="form-group"><label>Produção (un) *</label><input type="number" id="carradaProducao" min="0" oninput="calcTotalCarrada()" required></div>
+                <div class="form-group"><label>Valor por Carrada (R$) *</label><input type="number" id="carradaValor" step="0.01" min="0" placeholder="0,00" oninput="calcTotalCarrada()" required></div>
                 <div class="form-group"><label>Status *</label>
                     <select id="carradaStatus">
                         <option value="finalizado">FINALIZADO</option>
@@ -186,7 +194,8 @@
                     </select>
                 </div>
             </div>
-            <div class="form-group"><label>Observações</label><textarea id="carradaObs" rows="3"></textarea></div>
+            <div class="valor-total-calc" id="carradaTotalCalc">Total das Carradas: R$ 0,00</div>
+            <div class="form-group" style="margin-top:15px"><label>Observações</label><textarea id="carradaObs" rows="3"></textarea></div>
             <div class="dialog-buttons">
                 <button class="btn btn-danger" onclick="fecharFormulario('carrada')">CANCELAR</button>
                 <button class="btn btn-success" onclick="salvarCarrada()">SALVAR</button>
@@ -208,7 +217,7 @@
                     </select>
                 </div>
             </div>
-            <div class="form-group"><label>Obs</label><textarea id="motoristaObs" rows="3"></textarea></div>
+            <div class="form-group"><label>Observações</label><textarea id="motoristaObs" rows="3"></textarea></div>
             <div class="dialog-buttons">
                 <button class="btn btn-danger" onclick="fecharFormulario('motorista')">CANCELAR</button>
                 <button class="btn btn-success" onclick="salvarMotorista()">SALVAR</button>
@@ -220,7 +229,7 @@
             <input type="hidden" id="combustivelId">
             <div class="form-grid">
                 <div class="form-group"><label>Motorista *</label><select id="combustivelMotorista" required></select></div>
-                <div class="form-group"><label>Placa *</label><input type="text" id="combustivelPlaca" required></div>
+                <div class="form-group"><label>Placa *</label><input type="text" id="combustivelPlaca" oninput="this.value=this.value.toUpperCase()" required></div>
                 <div class="form-group"><label>Tipo *</label>
                     <select id="combustivelTipo" required>
                         <option value="diesel">DIESEL S10</option>
@@ -229,12 +238,13 @@
                         <option value="etanol">ETANOL</option>
                     </select>
                 </div>
-                <div class="form-group"><label>Litros *</label><input type="number" id="combustivelLitros" step="0.1" min="0" required></div>
-                <div class="form-group"><label>Valor/L *</label><input type="number" id="combustivelValorLitro" step="0.01" min="0" required></div>
+                <div class="form-group"><label>Litros *</label><input type="number" id="combustivelLitros" step="0.1" min="0" oninput="calcTotal('combustivel')" required></div>
+                <div class="form-group"><label>Valor/L *</label><input type="number" id="combustivelValorLitro" step="0.01" min="0" oninput="calcTotal('combustivel')" required></div>
                 <div class="form-group"><label>Data *</label><input type="date" id="combustivelData" required></div>
                 <div class="form-group"><label>Km</label><input type="number" id="combustivelKm"></div>
             </div>
-            <div class="form-group"><label>Obs</label><textarea id="combustivelObs" rows="3"></textarea></div>
+            <div class="valor-total-calc" id="combustivelTotalCalc">Total: R$ 0,00</div>
+            <div class="form-group" style="margin-top:15px"><label>Obs</label><textarea id="combustivelObs" rows="3"></textarea></div>
             <div class="dialog-buttons">
                 <button class="btn btn-danger" onclick="fecharFormulario('combustivel')">CANCELAR</button>
                 <button class="btn btn-success" onclick="salvarCombustivel()">SALVAR</button>
@@ -242,11 +252,11 @@
         </div>
 
         <div id="formOleo" class="form-container">
-            <h3 id="tituloFormOleo">🛢️ NOVO ABASTECIMENTO</h3>
+            <h3 id="tituloFormOleo">🛢️ NOVO ABASTECIMENTO ÓLEO</h3>
             <input type="hidden" id="oleoId">
             <div class="form-grid">
                 <div class="form-group"><label>Motorista *</label><select id="oleoMotorista" required></select></div>
-                <div class="form-group"><label>Placa *</label><input type="text" id="oleoPlaca" required></div>
+                <div class="form-group"><label>Placa *</label><input type="text" id="oleoPlaca" oninput="this.value=this.value.toUpperCase()" required></div>
                 <div class="form-group"><label>Tipo *</label>
                     <select id="oleoTipo" required>
                         <option value="motor">ÓLEO MOTOR</option>
@@ -255,12 +265,13 @@
                         <option value="diferencial">DIFERENCIAL</option>
                     </select>
                 </div>
-                <div class="form-group"><label>Litros *</label><input type="number" id="oleoLitros" step="0.1" min="0" required></div>
-                <div class="form-group"><label>Valor/L *</label><input type="number" id="oleoValorLitro" step="0.01" min="0" required></div>
+                <div class="form-group"><label>Litros *</label><input type="number" id="oleoLitros" step="0.1" min="0" oninput="calcTotal('oleo')" required></div>
+                <div class="form-group"><label>Valor/L *</label><input type="number" id="oleoValorLitro" step="0.01" min="0" oninput="calcTotal('oleo')" required></div>
                 <div class="form-group"><label>Data *</label><input type="date" id="oleoData" required></div>
                 <div class="form-group"><label>Km</label><input type="number" id="oleoKm"></div>
             </div>
-            <div class="form-group"><label>Obs</label><textarea id="oleoObs" rows="3"></textarea></div>
+            <div class="valor-total-calc" id="oleoTotalCalc">Total: R$ 0,00</div>
+            <div class="form-group" style="margin-top:15px"><label>Obs</label><textarea id="oleoObs" rows="3"></textarea></div>
             <div class="dialog-buttons">
                 <button class="btn btn-danger" onclick="fecharFormulario('oleo')">CANCELAR</button>
                 <button class="btn btn-success" onclick="salvarOleo()">SALVAR</button>
@@ -288,68 +299,73 @@
                 <button class="btn btn-success" onclick="salvarDiaria()">SALVAR</button>
             </div>
         </div>
-    </div>
+    </div><!-- fim admin-panel -->
 
-    <!-- Abas de Visualização -->
+    <!-- ===== ABAS DE VISUALIZAÇÃO ===== -->
     <div id="abaCarradas" class="tabela-container">
-        <div style="padding:15px; background:#ecf0f1">
+        <div style="padding:15px;background:#ecf0f1">
             <div class="filtros">
-                <select class="filtro-select" id="filtroStatusCarrada" onchange="filtrarCarradas()">
+                <select class="filtro-select" id="filtroStatusCarrada" onchange="aplicarFiltros()">
                     <option value="">Todos os status</option>
                     <option value="finalizado">FINALIZADO</option>
                     <option value="em-andamento">EM ANDAMENTO</option>
                     <option value="planejado">PLANEJADO</option>
                     <option value="cancelado">CANCELADO</option>
                 </select>
-                <input type="text" class="filtro-select" id="filtroPlacaCarrada" placeholder="Filtrar placa..." onkeyup="filtrarCarradas()">
+                <input type="text" class="filtro-select" id="filtroPlacaCarrada" placeholder="Filtrar placa..." oninput="aplicarFiltros()">
             </div>
         </div>
-        <table><thead><tr><th>Motorista</th><th>Placa</th><th>Destino</th><th>Data</th><th>Produção</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead><tbody id="tabelaCarradas"></tbody></table>
+        <table><thead><tr><th>Motorista</th><th>Placa</th><th>Destino</th><th>Data</th><th>Produção</th><th>Valor/Un</th><th>Total Carradas</th><th>Status</th><th>Obs</th><th>Ações</th></tr></thead>
+        <tbody id="tabelaCarradas"></tbody></table>
     </div>
 
     <div id="abaMotoristas" class="tabela-container" style="display:none">
-        <div style="padding:15px; background:#ecf0f1">
-            <select class="filtro-select" id="filtroStatusMotorista" onchange="filtrarMotoristas()">
+        <div style="padding:15px;background:#ecf0f1">
+            <select class="filtro-select" id="filtroStatusMotorista" onchange="aplicarFiltros()">
                 <option value="">Todos</option><option value="ativo">ATIVO</option><option value="inativo">INATIVO</option><option value="ferias">FÉRIAS</option>
             </select>
         </div>
-        <table><thead><tr><th>Nome</th><th>Telefone</th><th>Admissão</th><th>Status</th><th>Carradas</th><th>Produção</th><th>Diárias</th><th>Combustível</th><th>Óleo</th><th>Ações</th></tr></thead><tbody id="tabelaMotoristas"></tbody></table>
+        <table><thead><tr><th>Nome</th><th>Telefone</th><th>Admissão</th><th>Status</th><th>Carradas</th><th>Produção</th><th>Diárias</th><th>Combustível</th><th>Óleo</th><th>Ações</th></tr></thead>
+        <tbody id="tabelaMotoristas"></tbody></table>
     </div>
 
     <div id="abaCombustivel" class="tabela-container" style="display:none">
-        <div style="padding:15px; background:#ecf0f1">
+        <div style="padding:15px;background:#ecf0f1">
             <div class="filtros">
-                <select class="filtro-select" id="filtroTipoCombustivel" onchange="filtrarCombustivel()">
-                    <option value="">Todos</option><option value="diesel">DIESEL</option><option value="gasolina">GASOLINA</option><option value="etanol">ETANOL</option>
+                <select class="filtro-select" id="filtroTipoCombustivel" onchange="aplicarFiltros()">
+                    <option value="">Todos</option><option value="diesel">DIESEL S10</option><option value="diesel-comum">DIESEL COMUM</option><option value="gasolina">GASOLINA</option><option value="etanol">ETANOL</option>
                 </select>
-                <input type="text" class="filtro-select" id="filtroPlacaCombustivel" placeholder="Filtrar placa..." onkeyup="filtrarCombustivel()">
+                <input type="text" class="filtro-select" id="filtroPlacaCombustivel" placeholder="Filtrar placa..." oninput="aplicarFiltros()">
             </div>
         </div>
-        <table><thead><tr><th>Motorista</th><th>Placa</th><th>Tipo</th><th>Litros</th><th>Valor/L</th><th>Valor Total</th><th>Data</th><th>Km</th><th>Ações</th></tr></thead><tbody id="tabelaCombustivel"></tbody></table>
+        <table><thead><tr><th>Motorista</th><th>Placa</th><th>Tipo</th><th>Litros</th><th>Valor/L</th><th>Valor Total</th><th>Data</th><th>Km</th><th>Ações</th></tr></thead>
+        <tbody id="tabelaCombustivel"></tbody></table>
     </div>
 
     <div id="abaOleo" class="tabela-container" style="display:none">
-        <div style="padding:15px; background:#ecf0f1">
+        <div style="padding:15px;background:#ecf0f1">
             <div class="filtros">
-                <select class="filtro-select" id="filtroTipoOleo" onchange="filtrarOleo()">
-                    <option value="">Todos</option><option value="motor">MOTOR</option><option value="transmissao">TRANSMISSÃO</option><option value="hidraulico">HIDRÁULICO</option>
+                <select class="filtro-select" id="filtroTipoOleo" onchange="aplicarFiltros()">
+                    <option value="">Todos</option><option value="motor">MOTOR</option><option value="transmissao">TRANSMISSÃO</option><option value="hidraulico">HIDRÁULICO</option><option value="diferencial">DIFERENCIAL</option>
                 </select>
-                <input type="text" class="filtro-select" id="filtroPlacaOleo" placeholder="Filtrar placa..." onkeyup="filtrarOleo()">
+                <input type="text" class="filtro-select" id="filtroPlacaOleo" placeholder="Filtrar placa..." oninput="aplicarFiltros()">
             </div>
         </div>
-        <table><thead><tr><th>Motorista</th><th>Placa</th><th>Tipo</th><th>Litros</th><th>Valor/L</th><th>Valor Total</th><th>Data</th><th>Km</th><th>Ações</th></tr></thead><tbody id="tabelaOleo"></tbody></table>
+        <table><thead><tr><th>Motorista</th><th>Placa</th><th>Tipo</th><th>Litros</th><th>Valor/L</th><th>Valor Total</th><th>Data</th><th>Km</th><th>Ações</th></tr></thead>
+        <tbody id="tabelaOleo"></tbody></table>
     </div>
 
     <div id="abaDiarias" class="tabela-container" style="display:none">
-        <div style="padding:15px; background:#ecf0f1">
+        <div style="padding:15px;background:#ecf0f1">
             <div class="filtros">
-                <select class="filtro-select" id="filtroTipoDiaria" onchange="filtrarDiarias()">
+                <select class="filtro-select" id="filtroTipoDiaria" onchange="aplicarFiltros()">
                     <option value="">Todos</option><option value="normal">NORMAL</option><option value="extra">EXTRA</option><option value="viagem">VIAGEM</option>
                 </select>
-                <input type="month" class="filtro-select" id="filtroMesDiaria" onchange="filtrarDiarias()">
+                <input type="month" class="filtro-select" id="filtroMesDiaria" onchange="aplicarFiltros()">
             </div>
         </div>
-        <table><thead><tr><th>Motorista</th><th>Data</th><th>Tipo</th><th>Valor</th><th>Obs</th><th>Ações</th></tr></thead><tbody id="tabelaDiarias"></tbody></table>
+        <table><thead><tr><th>Motorista</th><th>Data</th><th>Tipo</th><th>Valor</th><th>Obs</th><th>Ações</th></tr></thead>
+        <tbody id="tabelaDiarias"></tbody></table>
     </div>
 
     <div id="abaProducao" class="tabela-container" style="display:none">
@@ -357,11 +373,34 @@
             <h3>📊 PRODUÇÃO POR MOTORISTA</h3>
             <div class="dashboard" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:20px">
                 <div class="card-stats"><div class="rotulo">Produção Total</div><div class="numero" id="producaoTotalGeral">0</div></div>
+                <div class="card-stats"><div class="rotulo">Valor Carradas</div><div class="numero" id="totalValorCarradasGeral">R$ 0</div></div>
                 <div class="card-stats"><div class="rotulo">Total Combustível</div><div class="numero" id="totalCombustivelGeral">0 L</div></div>
                 <div class="card-stats"><div class="rotulo">Total Óleo</div><div class="numero" id="totalOleoGeral">0 L</div></div>
                 <div class="card-stats"><div class="rotulo">Custo Combustível</div><div class="numero" id="custoCombustivelGeral">R$ 0</div></div>
             </div>
-            <table style="margin-top:20px"><thead><tr><th>Motorista</th><th>Carradas</th><th>Produção</th><th>Diárias</th><th>Combustível (L)</th><th>Custo Comb.</th><th>Óleo (L)</th><th>Custo Óleo</th><th>Performance</th></tr></thead><tbody id="tabelaProducaoMotoristas"></tbody></table>
+
+            <!-- Tabela resumo por motorista -->
+            <h4 style="margin:25px 0 10px;color:#1e3c2c;border-left:5px solid #f39c12;padding-left:12px">🚛 RESUMO GERAL POR MOTORISTA</h4>
+            <table style="margin-bottom:30px"><thead><tr>
+                <th>Motorista</th><th>Carradas</th><th>Produção</th><th>Valor Carradas</th>
+                <th>Diárias</th><th>Comb. (L)</th><th>Custo Comb.</th><th>Óleo (L)</th><th>Custo Óleo</th><th>Custo Total</th><th>Resultado Líquido</th><th>Performance</th>
+            </tr></thead><tbody id="tabelaProducaoMotoristas"></tbody></table>
+
+            <!-- Tabela detalhada: carradas -->
+            <h4 style="margin:25px 0 10px;color:#1e3c2c;border-left:5px solid #27ae60;padding-left:12px">🚛 DETALHES — CARRADAS</h4>
+            <div style="overflow-x:auto">
+            <table style="margin-bottom:30px"><thead><tr>
+                <th>Motorista</th><th>Placa</th><th>Destino</th><th>Data</th><th>Produção</th><th>Valor/Un</th><th>Total Carradas</th><th>Status</th>
+            </tr></thead><tbody id="tabelaProducaoCarradas"></tbody></table>
+            </div>
+
+            <!-- Tabela detalhada: combustível -->
+            <h4 style="margin:25px 0 10px;color:#1e3c2c;border-left:5px solid #e67e22;padding-left:12px">⛽ DETALHES — COMBUSTÍVEL</h4>
+            <div style="overflow-x:auto">
+            <table><thead><tr>
+                <th>Motorista</th><th>Placa</th><th>Tipo</th><th>Litros</th><th>Valor/L</th><th>Total</th><th>Data</th><th>Km</th>
+            </tr></thead><tbody id="tabelaProducaoCombustivel"></tbody></table>
+            </div>
         </div>
     </div>
 
@@ -370,18 +409,18 @@
         <div class="dashboard">
             <div class="card-stats"><div class="rotulo">Em Andamento</div><div class="numero" id="carradasAndamento">0</div></div>
             <div class="card-stats"><div class="rotulo">Motorista Destaque</div><div class="numero" id="motoristaDestaque">-</div></div>
-            <div class="card-stats"><div class="rotulo">Média Km/L</div><div class="numero" id="mediaKmL">3.2</div></div>
             <div class="card-stats"><div class="rotulo">Custo Total</div><div class="numero" id="custoTotal">R$ 0</div></div>
+            <div class="card-stats"><div class="rotulo">Custo Médio/Carrada</div><div class="numero" id="custoMedioCarrada">R$ 0</div></div>
         </div>
         <h3 style="margin-top:30px">⛽ ÚLTIMOS ABASTECIMENTOS</h3>
         <div class="cards-grid" id="gridAbastecimentosRecentes"></div>
     </div>
 
-    <!-- Diálogos -->
-    <div id="dialogConfirmar" class="dialog-overlay">
+    <!-- ===== DIÁLOGOS ===== -->
+    <div id="dialogConfirmar" class="dialog-overlay" onclick="if(event.target===this)fecharDialog()">
         <div class="dialog-box">
             <h3 id="dialogTitulo">Confirmar</h3>
-            <p id="dialogMensagem"></p>
+            <p id="dialogMensagem" style="margin-top:15px;font-size:1.1em;color:#555"></p>
             <div class="dialog-buttons">
                 <button class="btn btn-dark" onclick="fecharDialog()">Cancelar</button>
                 <button class="btn btn-danger" id="dialogConfirmarBtn">Confirmar</button>
@@ -389,1044 +428,1060 @@
         </div>
     </div>
 
-    <div id="dialogVisualizar" class="dialog-overlay">
+    <div id="dialogVisualizar" class="dialog-overlay" onclick="if(event.target===this)fecharDialogVisualizar()">
         <div class="dialog-box">
             <h3 id="visualizarTitulo">Detalhes</h3>
-            <div id="visualizarConteudo" style="line-height:1.8"></div>
+            <div id="visualizarConteudo" style="line-height:2;margin-top:15px"></div>
             <div class="dialog-buttons"><button class="btn btn-dark" onclick="fecharDialogVisualizar()">Fechar</button></div>
         </div>
     </div>
-</div>
+</div><!-- fim container -->
 
 <script>
-    // ============= BANCO DE DADOS OTIMIZADO =============
-    class Database {
-        constructor() {
-            this.anoFiltro = '2025';
-            this.initData();
+// ================================================================
+//  UTILITÁRIOS
+// ================================================================
+const hoje = () => new Date().toISOString().split('T')[0];
+
+// FIX: evita problema de timezone — converte "YYYY-MM-DD" sem usar new Date()
+function formatDate(str) {
+    if (!str) return '-';
+    const [y, m, d] = str.split('-');
+    return `${d}/${m}/${y}`;
+}
+
+function moeda(v) {
+    return 'R$ ' + (parseFloat(v) || 0).toFixed(2).replace('.', ',');
+}
+
+// FIX: aceita placa antiga (ABC-1234) e Mercosul (ABC1D23)
+function validarPlaca(placa) {
+    const p = placa.replace('-', '').toUpperCase();
+    return /^[A-Z]{3}\d{4}$/.test(p) || /^[A-Z]{3}\d[A-Z]\d{2}$/.test(p);
+}
+
+// Toast de feedback
+let _toastTimer = null;
+function toast(msg, tipo = 'ok') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show' + (tipo === 'erro' ? ' error' : '');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => { el.className = 'toast'; }, 3000);
+}
+
+// Cálculo em tempo real do total combustível/óleo
+function calcTotal(tipo) {
+    const litros = parseFloat(document.getElementById(`${tipo}Litros`).value) || 0;
+    const vl     = parseFloat(document.getElementById(`${tipo}ValorLitro`).value) || 0;
+    document.getElementById(`${tipo}TotalCalc`).textContent = `Total: ${moeda(litros * vl)}`;
+}
+
+// Cálculo em tempo real do total de carradas (produção × valor unitário)
+function calcTotalCarrada() {
+    const producao  = parseFloat(document.getElementById('carradaProducao').value) || 0;
+    const valorUnit = parseFloat(document.getElementById('carradaValor').value) || 0;
+    const total     = producao * valorUnit;
+    document.getElementById('carradaTotalCalc').textContent =
+        `${producao} un × ${moeda(valorUnit)} = ${moeda(total)}`;
+}
+
+// ================================================================
+//  BANCO DE DADOS
+// ================================================================
+class Database {
+    constructor() {
+        this.anoFiltro = '2025';
+        this._abaAtual = 'dashboard';
+        this.initData();
+    }
+
+    initData() {
+        if (!localStorage.getItem('motoristas')) {
+            localStorage.setItem('motoristas', JSON.stringify([
+                { id:1, nome:'João Silva',    telefone:'(11)99999-1111', admissao:'2025-01-15', status:'ativo', observacoes:'' },
+                { id:2, nome:'Carlos Santos', telefone:'(11)98888-2222', admissao:'2025-02-01', status:'ativo', observacoes:'' }
+            ]));
         }
-
-        initData() {
-            // Motoristas iniciais com coluna de tipo de combustível associado
-            if (!localStorage.getItem('motoristas')) {
-                const motoristas = [
-                    { id:1, nome:'João Silva', telefone:'(11)99999-1111', admissao:'2025-01-15', status:'ativo', 
-                      totalCarradas:3, producaoTotal:45, totalDiarias:1200, totalCombustivelLitros:350, totalCombustivelCusto:2275,
-                      totalOleoLitros:12, totalOleoCusto:420, observacoes:'', combustivelPreferencial:'diesel' },
-                    { id:2, nome:'Carlos Santos', telefone:'(11)98888-2222', admissao:'2025-02-01', status:'ativo',
-                      totalCarradas:5, producaoTotal:78, totalDiarias:2000, totalCombustivelLitros:520, totalCombustivelCusto:3380,
-                      totalOleoLitros:18, totalOleoCusto:630, observacoes:'', combustivelPreferencial:'gasolina' }
-                ];
-                localStorage.setItem('motoristas', JSON.stringify(motoristas));
-            }
-
-            // Carradas
-            if (!localStorage.getItem('carradas')) {
-                const carradas = [
-                    { id:1, motoristaId:1, motoristaNome:'João Silva', placa:'ABC-1234', destino:'São Paulo - SP', data:'2025-03-01', producao:25, status:'finalizado', observacoes:'' },
-                    { id:2, motoristaId:2, motoristaNome:'Carlos Santos', placa:'XYZ-5678', destino:'Rio de Janeiro - RJ', data:'2025-03-05', producao:32, status:'finalizado', observacoes:'' },
-                    { id:3, motoristaId:2, motoristaNome:'Carlos Santos', placa:'XYZ-5678', destino:'Belo Horizonte - MG', data:'2025-03-10', producao:28, status:'em-andamento', observacoes:'' }
-                ];
-                localStorage.setItem('carradas', JSON.stringify(carradas));
-            }
-
-            // Abastecimentos de Combustível (com tipo corrigido)
-            if (!localStorage.getItem('abastecimentosCombustivel')) {
-                const combustivel = [
-                    { id:1, motoristaId:1, motoristaNome:'João Silva', placa:'ABC-1234', tipo:'diesel', litros:150, valorLitro:6.50, data:'2025-03-01', quilometragem:15000, valorTotal:975, observacoes:'' },
-                    { id:2, motoristaId:1, motoristaNome:'João Silva', placa:'ABC-1234', tipo:'diesel', litros:200, valorLitro:6.50, data:'2025-03-10', quilometragem:15200, valorTotal:1300, observacoes:'' },
-                    { id:3, motoristaId:2, motoristaNome:'Carlos Santos', placa:'XYZ-5678', tipo:'gasolina', litros:180, valorLitro:5.80, data:'2025-03-05', quilometragem:22000, valorTotal:1044, observacoes:'' }
-                ];
-                localStorage.setItem('abastecimentosCombustivel', JSON.stringify(combustivel));
-            }
-
-            // Óleo
-            if (!localStorage.getItem('abastecimentosOleo')) {
-                const oleo = [
-                    { id:1, motoristaId:1, motoristaNome:'João Silva', placa:'ABC-1234', tipo:'motor', litros:8, valorLitro:35, data:'2025-03-01', quilometragem:15000, valorTotal:280, observacoes:'' },
-                    { id:2, motoristaId:2, motoristaNome:'Carlos Santos', placa:'XYZ-5678', tipo:'motor', litros:10, valorLitro:35, data:'2025-03-05', quilometragem:22000, valorTotal:350, observacoes:'' }
-                ];
-                localStorage.setItem('abastecimentosOleo', JSON.stringify(oleo));
-            }
-
-            // Diárias
-            if (!localStorage.getItem('diarias')) {
-                const diarias = [
-                    { id:1, motoristaId:1, motoristaNome:'João Silva', data:'2025-03-01', valor:150, tipo:'normal', observacoes:'' },
-                    { id:2, motoristaId:2, motoristaNome:'Carlos Santos', data:'2025-03-05', valor:200, tipo:'extra', observacoes:'' }
-                ];
-                localStorage.setItem('diarias', JSON.stringify(diarias));
-            }
+        if (!localStorage.getItem('carradas')) {
+            localStorage.setItem('carradas', JSON.stringify([
+                { id:1, motoristaId:1, motoristaNome:'João Silva',    placa:'ABC-1234', destino:'São Paulo - SP',       data:'2025-03-01', producao:25, valor:1500, status:'finalizado',   observacoes:'' },
+                { id:2, motoristaId:2, motoristaNome:'Carlos Santos', placa:'XYZ-5678', destino:'Rio de Janeiro - RJ',  data:'2025-03-05', producao:32, valor:2000, status:'finalizado',   observacoes:'' },
+                { id:3, motoristaId:2, motoristaNome:'Carlos Santos', placa:'XYZ-5678', destino:'Belo Horizonte - MG', data:'2025-03-10', producao:28, valor:1800, status:'em-andamento', observacoes:'' }
+            ]));
         }
-
-        get(collection) { return JSON.parse(localStorage.getItem(collection)) || []; }
-        set(collection, data) { localStorage.setItem(collection, JSON.stringify(data)); this.atualizarTodos(); }
-
-        add(collection, item) {
-            const items = this.get(collection);
-            item.id = items.length ? Math.max(...items.map(i => i.id)) + 1 : 1;
-            items.push(item);
-            this.set(collection, items);
-            return item;
+        if (!localStorage.getItem('abastecimentosCombustivel')) {
+            localStorage.setItem('abastecimentosCombustivel', JSON.stringify([
+                { id:1, motoristaId:1, motoristaNome:'João Silva',    placa:'ABC-1234', tipo:'diesel',   litros:150, valorLitro:6.50, valorTotal:975,  data:'2025-03-01', quilometragem:15000, observacoes:'' },
+                { id:2, motoristaId:1, motoristaNome:'João Silva',    placa:'ABC-1234', tipo:'diesel',   litros:200, valorLitro:6.50, valorTotal:1300, data:'2025-03-10', quilometragem:15200, observacoes:'' },
+                { id:3, motoristaId:2, motoristaNome:'Carlos Santos', placa:'XYZ-5678', tipo:'gasolina', litros:180, valorLitro:5.80, valorTotal:1044, data:'2025-03-05', quilometragem:22000, observacoes:'' }
+            ]));
         }
-
-        update(collection, id, newData) {
-            const items = this.get(collection);
-            const index = items.findIndex(i => i.id === id);
-            if (index !== -1) { items[index] = { ...items[index], ...newData }; this.set(collection, items); return true; }
-            return false;
+        if (!localStorage.getItem('abastecimentosOleo')) {
+            localStorage.setItem('abastecimentosOleo', JSON.stringify([
+                { id:1, motoristaId:1, motoristaNome:'João Silva',    placa:'ABC-1234', tipo:'motor', litros:8,  valorLitro:35, valorTotal:280, data:'2025-03-01', quilometragem:15000, observacoes:'' },
+                { id:2, motoristaId:2, motoristaNome:'Carlos Santos', placa:'XYZ-5678', tipo:'motor', litros:10, valorLitro:35, valorTotal:350, data:'2025-03-05', quilometragem:22000, observacoes:'' }
+            ]));
         }
-
-        delete(collection, id) {
-            const items = this.get(collection);
-            const filtered = items.filter(i => i.id !== id);
-            this.set(collection, filtered);
-        }
-
-        // Filtro por ano
-        filterByYear(items) {
-            if (this.anoFiltro === 'todos') return items;
-            return items.filter(i => i.data && new Date(i.data).getFullYear().toString() === this.anoFiltro);
-        }
-
-        getCarradas() { return this.filterByYear(this.get('carradas')).sort((a,b) => new Date(b.data) - new Date(a.data)); }
-        getCombustivel() { return this.filterByYear(this.get('abastecimentosCombustivel')).sort((a,b) => new Date(b.data) - new Date(a.data)); }
-        getOleo() { return this.filterByYear(this.get('abastecimentosOleo')).sort((a,b) => new Date(b.data) - new Date(a.data)); }
-        getDiarias() { return this.filterByYear(this.get('diarias')).sort((a,b) => new Date(b.data) - new Date(a.data)); }
-        getMotoristas() { return this.get('motoristas'); }
-
-        // Estatísticas
-        getTotalCarradas() { return this.getCarradas().length; }
-        getProducaoTotal() { return this.getCarradas().reduce((acc, c) => acc + (c.producao || 0), 0); }
-        getTotalCombustivelLitros() { return this.getCombustivel().reduce((acc, c) => acc + (c.litros || 0), 0); }
-        getTotalCombustivelCusto() { return this.getCombustivel().reduce((acc, c) => acc + (c.valorTotal || 0), 0); }
-        getTotalOleoLitros() { return this.getOleo().reduce((acc, o) => acc + (o.litros || 0), 0); }
-        getTotalOleoCusto() { return this.getOleo().reduce((acc, o) => acc + (o.valorTotal || 0), 0); }
-
-        getProducaoPorMotorista() {
-            const motoristas = this.getMotoristas();
-            const carradas = this.getCarradas();
-            const combustivel = this.getCombustivel();
-            const oleo = this.getOleo();
-            const diarias = this.getDiarias();
-
-            return motoristas.map(m => ({
-                ...m,
-                totalCarradas: carradas.filter(c => c.motoristaId === m.id).length,
-                producaoTotal: carradas.filter(c => c.motoristaId === m.id).reduce((acc, c) => acc + (c.producao || 0), 0),
-                totalCombustivelLitros: combustivel.filter(c => c.motoristaId === m.id).reduce((acc, c) => acc + (c.litros || 0), 0),
-                totalCombustivelCusto: combustivel.filter(c => c.motoristaId === m.id).reduce((acc, c) => acc + (c.valorTotal || 0), 0),
-                totalOleoLitros: oleo.filter(o => o.motoristaId === m.id).reduce((acc, o) => acc + (o.litros || 0), 0),
-                totalOleoCusto: oleo.filter(o => o.motoristaId === m.id).reduce((acc, o) => acc + (o.valorTotal || 0), 0),
-                totalDiarias: diarias.filter(d => d.motoristaId === m.id).reduce((acc, d) => acc + (d.valor || 0), 0)
-            }));
-        }
-
-        getMotoristaDestaque() {
-            const prod = this.getProducaoPorMotorista();
-            return prod.length ? prod.reduce((max, m) => (m.producaoTotal > max.producaoTotal ? m : max), prod[0]) : null;
-        }
-
-        atualizarDashboard() {
-            document.getElementById('totalCarradas').textContent = this.getTotalCarradas();
-            document.getElementById('producaoAcumulada').textContent = this.getProducaoTotal();
-            document.getElementById('totalCombustivel').textContent = this.getTotalCombustivelLitros().toFixed(1);
-            document.getElementById('totalOleo').textContent = this.getTotalOleoLitros().toFixed(1);
-        }
-
-        atualizarTodos() {
-            this.atualizarDashboard();
-            if (typeof atualizarTabelaCarradas === 'function') atualizarTabelaCarradas();
-            if (typeof atualizarTabelaMotoristas === 'function') atualizarTabelaMotoristas();
-            if (typeof atualizarTabelaCombustivel === 'function') atualizarTabelaCombustivel();
-            if (typeof atualizarTabelaOleo === 'function') atualizarTabelaOleo();
-            if (typeof atualizarTabelaDiarias === 'function') atualizarTabelaDiarias();
-            if (typeof atualizarTabelaProducao === 'function') atualizarTabelaProducao();
-            if (typeof atualizarDashboardVisual === 'function') atualizarDashboardVisual();
+        if (!localStorage.getItem('diarias')) {
+            localStorage.setItem('diarias', JSON.stringify([
+                { id:1, motoristaId:1, motoristaNome:'João Silva',    data:'2025-03-01', valor:150, tipo:'normal', observacoes:'' },
+                { id:2, motoristaId:2, motoristaNome:'Carlos Santos', data:'2025-03-05', valor:200, tipo:'extra',  observacoes:'' }
+            ]));
         }
     }
 
-    const db = new Database();
+    // Leitura
+    get(col) { return JSON.parse(localStorage.getItem(col)) || []; }
 
-    // ============= FUNÇÕES DE INTERFACE =============
-    function aplicarFiltroAno() {
-        db.anoFiltro = document.getElementById('filtroAno').value;
-        db.atualizarTodos();
+    // FIX: escrita sem disparar UI desnecessariamente
+    _save(col, data) { localStorage.setItem(col, JSON.stringify(data)); }
+
+    // Escrita pública: salva E atualiza UI
+    set(col, data) { this._save(col, data); this.atualizarTodos(); }
+
+    add(col, item) {
+        const items = this.get(col);
+        item.id = items.length ? Math.max(...items.map(i => i.id)) + 1 : 1;
+        items.push(item);
+        this._save(col, items);
+        return item;
     }
 
-    function mostrarAba(aba) {
-        ['carradas','motoristas','combustivel','oleo','diarias','producao','dashboard'].forEach(a => 
-            document.getElementById(`aba${a.charAt(0).toUpperCase()+a.slice(1)}`).style.display = a === aba ? 'block' : 'none'
-        );
-        if (aba === 'carradas') atualizarTabelaCarradas();
-        else if (aba === 'motoristas') atualizarTabelaMotoristas();
-        else if (aba === 'combustivel') atualizarTabelaCombustivel();
-        else if (aba === 'oleo') atualizarTabelaOleo();
-        else if (aba === 'diarias') atualizarTabelaDiarias();
-        else if (aba === 'producao') atualizarTabelaProducao();
-        else if (aba === 'dashboard') atualizarDashboardVisual();
+    update(col, id, newData) {
+        const items = this.get(col);
+        const idx = items.findIndex(i => i.id === id);
+        if (idx !== -1) { items[idx] = { ...items[idx], ...newData }; this._save(col, items); return true; }
+        return false;
     }
 
-    function mostrarFormulario(tipo, id = null) {
-        fecharTodosFormularios();
-        document.getElementById(`form${tipo.charAt(0).toUpperCase()+tipo.slice(1)}`).style.display = 'block';
-        limparCampos(tipo);
-        if (tipo !== 'motorista' && tipo !== 'diaria') carregarMotoristasSelect(tipo);
-        if (id) carregarDadosEdicao(tipo, id);
-        else if (tipo.includes('data')) document.getElementById(`${tipo}Data`).valueAsDate = new Date();
+    delete(col, id) {
+        this._save(col, this.get(col).filter(i => i.id !== id));
     }
 
-    function fecharFormulario(tipo) {
-        document.getElementById(`form${tipo.charAt(0).toUpperCase()+tipo.slice(1)}`).style.display = 'none';
+    // FIX: recalcula stats de um motorista do zero (evita drift em edições/exclusões)
+    recalcularMotorista(motoristaId) {
+        const mid = parseInt(motoristaId);
+        const carradas    = this.get('carradas').filter(c => c.motoristaId === mid);
+        const combustivel = this.get('abastecimentosCombustivel').filter(c => c.motoristaId === mid);
+        const oleo        = this.get('abastecimentosOleo').filter(o => o.motoristaId === mid);
+        const diarias     = this.get('diarias').filter(d => d.motoristaId === mid);
+        this.update('motoristas', mid, {
+            totalCarradas:          carradas.length,
+            producaoTotal:          carradas.reduce((s,c) => s+(c.producao||0), 0),
+            totalValorCarradas:     carradas.reduce((s,c) => s+(c.valor||0), 0),
+            totalCombustivelLitros: combustivel.reduce((s,c) => s+(c.litros||0), 0),
+            totalCombustivelCusto:  combustivel.reduce((s,c) => s+(c.valorTotal||0), 0),
+            totalOleoLitros:        oleo.reduce((s,o) => s+(o.litros||0), 0),
+            totalOleoCusto:         oleo.reduce((s,o) => s+(o.valorTotal||0), 0),
+            totalDiarias:           diarias.reduce((s,d) => s+(d.valor||0), 0)
+        });
     }
 
-    function fecharTodosFormularios() {
-        ['carrada','motorista','combustivel','oleo','diaria'].forEach(f => fecharFormulario(f));
+    // Filtro por ano — usa comparação de string (mais rápido que new Date())
+    _filtroAno(items) {
+        if (this.anoFiltro === 'todos') return items;
+        return items.filter(i => i.data && i.data.startsWith(this.anoFiltro));
     }
 
-    function limparCampos(tipo) {
-        document.getElementById(`${tipo}Id`).value = '';
-        if (tipo === 'carrada') {
-            document.getElementById('carradaMotorista').value = '';
-            document.getElementById('carradaPlaca').value = '';
-            document.getElementById('carradaDestino').value = '';
-            document.getElementById('carradaData').value = '';
-            document.getElementById('carradaProducao').value = '';
-            document.getElementById('carradaStatus').value = 'finalizado';
-            document.getElementById('carradaObs').value = '';
-        } else if (tipo === 'motorista') {
-            document.getElementById('motoristaNome').value = '';
-            document.getElementById('motoristaTelefone').value = '';
-            document.getElementById('motoristaAdmissao').value = '';
-            document.getElementById('motoristaStatus').value = 'ativo';
-            document.getElementById('motoristaObs').value = '';
-        } else if (tipo === 'combustivel') {
-            document.getElementById('combustivelMotorista').value = '';
-            document.getElementById('combustivelPlaca').value = '';
-            document.getElementById('combustivelTipo').value = 'diesel';
-            document.getElementById('combustivelLitros').value = '';
-            document.getElementById('combustivelValorLitro').value = '';
-            document.getElementById('combustivelData').value = '';
-            document.getElementById('combustivelKm').value = '';
-            document.getElementById('combustivelObs').value = '';
-        } else if (tipo === 'oleo') {
-            document.getElementById('oleoMotorista').value = '';
-            document.getElementById('oleoPlaca').value = '';
-            document.getElementById('oleoTipo').value = 'motor';
-            document.getElementById('oleoLitros').value = '';
-            document.getElementById('oleoValorLitro').value = '';
-            document.getElementById('oleoData').value = '';
-            document.getElementById('oleoKm').value = '';
-            document.getElementById('oleoObs').value = '';
-        } else if (tipo === 'diaria') {
-            document.getElementById('diariaMotorista').value = '';
-            document.getElementById('diariaData').value = '';
-            document.getElementById('diariaValor').value = '';
-            document.getElementById('diariaTipo').value = 'normal';
-            document.getElementById('diariaObs').value = '';
-        }
+    // Ordenação descendente por data (string ISO ordena corretamente)
+    _sortDesc(items) { return [...items].sort((a,b) => (b.data||'') > (a.data||'') ? 1 : -1); }
+
+    getCarradas()    { return this._sortDesc(this._filtroAno(this.get('carradas'))); }
+    getCombustivel() { return this._sortDesc(this._filtroAno(this.get('abastecimentosCombustivel'))); }
+    getOleo()        { return this._sortDesc(this._filtroAno(this.get('abastecimentosOleo'))); }
+    getDiarias()     { return this._sortDesc(this._filtroAno(this.get('diarias'))); }
+    getMotoristas()  { return this.get('motoristas'); }
+
+    getTotalCarradas()          { return this.getCarradas().length; }
+    getProducaoTotal()          { return this.getCarradas().reduce((s,c) => s+(c.producao||0), 0); }
+    getTotalValorCarradas()     { return this.getCarradas().reduce((s,c) => s+(c.valor||0), 0); }
+    getTotalCombustivelLitros() { return this.getCombustivel().reduce((s,c) => s+(c.litros||0), 0); }
+    getTotalCombustivelCusto()  { return this.getCombustivel().reduce((s,c) => s+(c.valorTotal||0), 0); }
+    getTotalOleoLitros()        { return this.getOleo().reduce((s,o) => s+(o.litros||0), 0); }
+    getTotalOleoCusto()         { return this.getOleo().reduce((s,o) => s+(o.valorTotal||0), 0); }
+
+    getProducaoPorMotorista() {
+        const motoristas  = this.getMotoristas();
+        const carradas    = this.getCarradas();
+        const combustivel = this.getCombustivel();
+        const oleo        = this.getOleo();
+        const diarias     = this.getDiarias();
+        return motoristas.map(m => ({
+            ...m,
+            totalCarradas:          carradas.filter(c=>c.motoristaId===m.id).length,
+            producaoTotal:          carradas.filter(c=>c.motoristaId===m.id).reduce((s,c)=>s+(c.producao||0),0),
+            totalValorCarradas:     carradas.filter(c=>c.motoristaId===m.id).reduce((s,c)=>s+(c.valor||0),0),
+            totalCombustivelLitros: combustivel.filter(c=>c.motoristaId===m.id).reduce((s,c)=>s+(c.litros||0),0),
+            totalCombustivelCusto:  combustivel.filter(c=>c.motoristaId===m.id).reduce((s,c)=>s+(c.valorTotal||0),0),
+            totalOleoLitros:        oleo.filter(o=>o.motoristaId===m.id).reduce((s,o)=>s+(o.litros||0),0),
+            totalOleoCusto:         oleo.filter(o=>o.motoristaId===m.id).reduce((s,o)=>s+(o.valorTotal||0),0),
+            totalDiarias:           diarias.filter(d=>d.motoristaId===m.id).reduce((s,d)=>s+(d.valor||0),0)
+        }));
     }
 
-    function carregarDadosEdicao(tipo, id) {
-        let item;
-        if (tipo === 'carrada') item = db.get('carradas').find(i => i.id === id);
-        else if (tipo === 'motorista') item = db.get('motoristas').find(i => i.id === id);
-        else if (tipo === 'combustivel') item = db.get('abastecimentosCombustivel').find(i => i.id === id);
-        else if (tipo === 'oleo') item = db.get('abastecimentosOleo').find(i => i.id === id);
-        else if (tipo === 'diaria') item = db.get('diarias').find(i => i.id === id);
-        
-        if (!item) return;
-        
-        document.getElementById(`${tipo}Id`).value = item.id;
-        if (tipo === 'carrada') {
-            document.getElementById('carradaMotorista').value = item.motoristaId;
-            document.getElementById('carradaPlaca').value = item.placa;
-            document.getElementById('carradaDestino').value = item.destino;
-            document.getElementById('carradaData').value = item.data;
-            document.getElementById('carradaProducao').value = item.producao;
-            document.getElementById('carradaStatus').value = item.status;
-            document.getElementById('carradaObs').value = item.observacoes || '';
-        } else if (tipo === 'motorista') {
-            document.getElementById('motoristaNome').value = item.nome;
-            document.getElementById('motoristaTelefone').value = item.telefone;
-            document.getElementById('motoristaAdmissao').value = item.admissao || '';
-            document.getElementById('motoristaStatus').value = item.status;
-            document.getElementById('motoristaObs').value = item.observacoes || '';
-        } else if (tipo === 'combustivel') {
-            document.getElementById('combustivelMotorista').value = item.motoristaId;
-            document.getElementById('combustivelPlaca').value = item.placa;
-            document.getElementById('combustivelTipo').value = item.tipo;
-            document.getElementById('combustivelLitros').value = item.litros;
-            document.getElementById('combustivelValorLitro').value = item.valorLitro;
-            document.getElementById('combustivelData').value = item.data;
-            document.getElementById('combustivelKm').value = item.quilometragem || '';
-            document.getElementById('combustivelObs').value = item.observacoes || '';
-        } else if (tipo === 'oleo') {
-            document.getElementById('oleoMotorista').value = item.motoristaId;
-            document.getElementById('oleoPlaca').value = item.placa;
-            document.getElementById('oleoTipo').value = item.tipo;
-            document.getElementById('oleoLitros').value = item.litros;
-            document.getElementById('oleoValorLitro').value = item.valorLitro;
-            document.getElementById('oleoData').value = item.data;
-            document.getElementById('oleoKm').value = item.quilometragem || '';
-            document.getElementById('oleoObs').value = item.observacoes || '';
-        } else if (tipo === 'diaria') {
-            document.getElementById('diariaMotorista').value = item.motoristaId;
-            document.getElementById('diariaData').value = item.data;
-            document.getElementById('diariaValor').value = item.valor;
-            document.getElementById('diariaTipo').value = item.tipo;
-            document.getElementById('diariaObs').value = item.observacoes || '';
-        }
+    getMotoristaDestaque() {
+        const prod = this.getProducaoPorMotorista();
+        return prod.length ? prod.reduce((max,m) => (m.producaoTotal>max.producaoTotal?m:max), prod[0]) : null;
     }
 
-    function carregarMotoristasSelect(tipo) {
-        const selectId = `${tipo}Motorista`;
-        const select = document.getElementById(selectId);
-        const motoristas = db.getMotoristas();
-        select.innerHTML = '<option value="">Selecione</option>' + 
-            motoristas.map(m => `<option value="${m.id}" data-nome="${m.nome}">${m.nome}</option>`).join('');
+    atualizarDashboard() {
+        document.getElementById('totalCarradas').textContent       = this.getTotalCarradas();
+        document.getElementById('producaoAcumulada').textContent   = this.getProducaoTotal();
+        document.getElementById('totalValorCarradas').textContent  = moeda(this.getTotalValorCarradas());
+        document.getElementById('totalCombustivel').textContent    = this.getTotalCombustivelLitros().toFixed(1);
+        document.getElementById('totalOleo').textContent           = this.getTotalOleoLitros().toFixed(1);
     }
 
-    // ============= FUNÇÕES DE SALVAR =============
-    function salvarCarrada() {
-        const id = document.getElementById('carradaId').value;
-        const motoristaSelect = document.getElementById('carradaMotorista');
-        const motoristaId = parseInt(motoristaSelect.value);
-        const motoristaNome = motoristaSelect.options[motoristaSelect.selectedIndex]?.dataset.nome || '';
-        const placa = document.getElementById('carradaPlaca').value.toUpperCase();
-        if (!/^[A-Z]{3}-\d{4}$/.test(placa)) { alert('Placa inválida!'); return; }
-        
-        const data = {
-            motoristaId, motoristaNome, placa,
-            destino: document.getElementById('carradaDestino').value,
-            data: document.getElementById('carradaData').value,
-            producao: parseInt(document.getElementById('carradaProducao').value) || 0,
-            status: document.getElementById('carradaStatus').value,
-            observacoes: document.getElementById('carradaObs').value
-        };
-        if (!data.motoristaId || !data.placa || !data.destino || !data.data || !data.producao) { alert('Preencha todos os campos!'); return; }
-
-        if (id) {
-            const antiga = db.get('carradas').find(c => c.id === parseInt(id));
-            db.update('carradas', parseInt(id), data);
-            const motorista = db.getMotoristas().find(m => m.id === motoristaId);
-            if (motorista) {
-                motorista.producaoTotal = (motorista.producaoTotal || 0) - (antiga.producao || 0) + data.producao;
-                db.update('motoristas', motoristaId, motorista);
-            }
-        } else {
-            db.add('carradas', data);
-            const motorista = db.getMotoristas().find(m => m.id === motoristaId);
-            if (motorista) {
-                motorista.totalCarradas = (motorista.totalCarradas || 0) + 1;
-                motorista.producaoTotal = (motorista.producaoTotal || 0) + data.producao;
-                db.update('motoristas', motoristaId, motorista);
-            }
-        }
-        fecharFormulario('carrada');
-        db.atualizarTodos();
-        mostrarAba('carradas');
+    atualizarTodos() {
+        this.atualizarDashboard();
+        // Renderiza apenas a aba visível para economizar processamento
+        renderAba(this._abaAtual);
     }
+}
 
-    function salvarMotorista() {
-        const id = document.getElementById('motoristaId').value;
-        const data = {
-            nome: document.getElementById('motoristaNome').value,
-            telefone: document.getElementById('motoristaTelefone').value,
-            admissao: document.getElementById('motoristaAdmissao').value,
-            status: document.getElementById('motoristaStatus').value,
-            observacoes: document.getElementById('motoristaObs').value,
-            combustivelPreferencial: 'diesel' // campo novo
-        };
-        if (!data.nome || !data.telefone) { alert('Preencha os campos!'); return; }
+const db = new Database();
 
-        if (id) {
-            const antigo = db.get('motoristas').find(m => m.id === parseInt(id));
-            data.totalCarradas = antigo.totalCarradas || 0;
-            data.producaoTotal = antigo.producaoTotal || 0;
-            data.totalDiarias = antigo.totalDiarias || 0;
-            data.totalCombustivelLitros = antigo.totalCombustivelLitros || 0;
-            data.totalCombustivelCusto = antigo.totalCombustivelCusto || 0;
-            data.totalOleoLitros = antigo.totalOleoLitros || 0;
-            data.totalOleoCusto = antigo.totalOleoCusto || 0;
-            db.update('motoristas', parseInt(id), data);
-        } else {
-            data.totalCarradas = 0; data.producaoTotal = 0; data.totalDiarias = 0;
-            data.totalCombustivelLitros = 0; data.totalCombustivelCusto = 0;
-            data.totalOleoLitros = 0; data.totalOleoCusto = 0;
-            db.add('motoristas', data);
-        }
-        fecharFormulario('motorista');
-        db.atualizarTodos();
-        mostrarAba('motoristas');
-    }
+// ================================================================
+//  ABAS
+// ================================================================
+const ABAS = ['carradas','motoristas','combustivel','oleo','diarias','producao','dashboard'];
 
-    function salvarCombustivel() {
-        const id = document.getElementById('combustivelId').value;
-        const motoristaSelect = document.getElementById('combustivelMotorista');
-        const motoristaId = parseInt(motoristaSelect.value);
-        const motoristaNome = motoristaSelect.options[motoristaSelect.selectedIndex]?.dataset.nome || '';
-        const litros = parseFloat(document.getElementById('combustivelLitros').value) || 0;
-        const valorLitro = parseFloat(document.getElementById('combustivelValorLitro').value) || 0;
-        const valorTotal = litros * valorLitro;
-        
-        const data = {
-            motoristaId, motoristaNome,
-            placa: document.getElementById('combustivelPlaca').value.toUpperCase(),
-            tipo: document.getElementById('combustivelTipo').value,
-            litros, valorLitro, valorTotal,
-            data: document.getElementById('combustivelData').value,
-            quilometragem: parseInt(document.getElementById('combustivelKm').value) || null,
-            observacoes: document.getElementById('combustivelObs').value
-        };
-        if (!data.motoristaId || !data.placa || !data.litros || !data.valorLitro || !data.data) { alert('Preencha os campos!'); return; }
+function mostrarAba(aba) {
+    db._abaAtual = aba;
+    ABAS.forEach(a => {
+        const el = document.getElementById(`aba${a.charAt(0).toUpperCase()+a.slice(1)}`);
+        if (el) el.style.display = (a === aba) ? 'block' : 'none';
+    });
+    renderAba(aba);
+}
 
-        if (id) {
-            const antigo = db.get('abastecimentosCombustivel').find(c => c.id === parseInt(id));
-            db.update('abastecimentosCombustivel', parseInt(id), data);
-            const motorista = db.getMotoristas().find(m => m.id === motoristaId);
-            if (motorista) {
-                motorista.totalCombustivelLitros = (motorista.totalCombustivelLitros || 0) - (antigo.litros || 0) + litros;
-                motorista.totalCombustivelCusto = (motorista.totalCombustivelCusto || 0) - (antigo.valorTotal || 0) + valorTotal;
-                db.update('motoristas', motoristaId, motorista);
-            }
-        } else {
-            db.add('abastecimentosCombustivel', data);
-            const motorista = db.getMotoristas().find(m => m.id === motoristaId);
-            if (motorista) {
-                motorista.totalCombustivelLitros = (motorista.totalCombustivelLitros || 0) + litros;
-                motorista.totalCombustivelCusto = (motorista.totalCombustivelCusto || 0) + valorTotal;
-                db.update('motoristas', motoristaId, motorista);
-            }
-        }
-        fecharFormulario('combustivel');
-        db.atualizarTodos();
-        mostrarAba('combustivel');
-    }
+function renderAba(aba) {
+    const termo = document.getElementById('pesquisaGlobal').value.toLowerCase();
+    if (aba === 'carradas')    renderCarradas(filtrarCarradasData(termo));
+    else if (aba === 'motoristas')  renderMotoristas(filtrarMotoristasData(termo));
+    else if (aba === 'combustivel') renderCombustivel(filtrarCombustivelData(termo));
+    else if (aba === 'oleo')        renderOleo(filtrarOleoData(termo));
+    else if (aba === 'diarias')     renderDiarias(filtrarDiariasData(termo));
+    else if (aba === 'producao')    renderProducao();
+    else if (aba === 'dashboard')   renderDashboard();
+}
 
-    function salvarOleo() {
-        const id = document.getElementById('oleoId').value;
-        const motoristaSelect = document.getElementById('oleoMotorista');
-        const motoristaId = parseInt(motoristaSelect.value);
-        const motoristaNome = motoristaSelect.options[motoristaSelect.selectedIndex]?.dataset.nome || '';
-        const litros = parseFloat(document.getElementById('oleoLitros').value) || 0;
-        const valorLitro = parseFloat(document.getElementById('oleoValorLitro').value) || 0;
-        const valorTotal = litros * valorLitro;
-        
-        const data = {
-            motoristaId, motoristaNome,
-            placa: document.getElementById('oleoPlaca').value.toUpperCase(),
-            tipo: document.getElementById('oleoTipo').value,
-            litros, valorLitro, valorTotal,
-            data: document.getElementById('oleoData').value,
-            quilometragem: parseInt(document.getElementById('oleoKm').value) || null,
-            observacoes: document.getElementById('oleoObs').value
-        };
-        if (!data.motoristaId || !data.placa || !data.litros || !data.valorLitro || !data.data) { alert('Preencha os campos!'); return; }
+// Pesquisa/filtro unificado — FIX: termo + filtros dropdown funcionam juntos
+function aplicarFiltros() { renderAba(db._abaAtual); }
+function limparPesquisa() { document.getElementById('pesquisaGlobal').value = ''; aplicarFiltros(); }
 
-        if (id) {
-            const antigo = db.get('abastecimentosOleo').find(o => o.id === parseInt(id));
-            db.update('abastecimentosOleo', parseInt(id), data);
-            const motorista = db.getMotoristas().find(m => m.id === motoristaId);
-            if (motorista) {
-                motorista.totalOleoLitros = (motorista.totalOleoLitros || 0) - (antigo.litros || 0) + litros;
-                motorista.totalOleoCusto = (motorista.totalOleoCusto || 0) - (antigo.valorTotal || 0) + valorTotal;
-                db.update('motoristas', motoristaId, motorista);
-            }
-        } else {
-            db.add('abastecimentosOleo', data);
-            const motorista = db.getMotoristas().find(m => m.id === motoristaId);
-            if (motorista) {
-                motorista.totalOleoLitros = (motorista.totalOleoLitros || 0) + litros;
-                motorista.totalOleoCusto = (motorista.totalOleoCusto || 0) + valorTotal;
-                db.update('motoristas', motoristaId, motorista);
-            }
-        }
-        fecharFormulario('oleo');
-        db.atualizarTodos();
-        mostrarAba('oleo');
-    }
+// ================================================================
+//  FUNÇÕES DE FILTRAGEM (retornam arrays, sem tocar no DOM)
+// ================================================================
+function filtrarCarradasData(termo='') {
+    const status = document.getElementById('filtroStatusCarrada')?.value || '';
+    const placa  = (document.getElementById('filtroPlacaCarrada')?.value || '').toLowerCase();
+    return db.getCarradas().filter(i =>
+        (!termo  || i.motoristaNome.toLowerCase().includes(termo) || i.placa.toLowerCase().includes(termo) || i.destino.toLowerCase().includes(termo)) &&
+        (!status || i.status === status) &&
+        (!placa  || i.placa.toLowerCase().includes(placa))
+    );
+}
 
-    function salvarDiaria() {
-        const id = document.getElementById('diariaId').value;
-        const motoristaSelect = document.getElementById('diariaMotorista');
-        const motoristaId = parseInt(motoristaSelect.value);
-        const motoristaNome = motoristaSelect.options[motoristaSelect.selectedIndex]?.dataset.nome || '';
-        const valor = parseFloat(document.getElementById('diariaValor').value) || 0;
-        
-        const data = {
-            motoristaId, motoristaNome,
-            data: document.getElementById('diariaData').value,
-            valor,
-            tipo: document.getElementById('diariaTipo').value,
-            observacoes: document.getElementById('diariaObs').value
-        };
-        if (!data.motoristaId || !data.data || !data.valor) { alert('Preencha os campos!'); return; }
+function filtrarMotoristasData(termo='') {
+    const status = document.getElementById('filtroStatusMotorista')?.value || '';
+    return db.getMotoristas().filter(i =>
+        (!termo  || i.nome.toLowerCase().includes(termo) || i.telefone.includes(termo)) &&
+        (!status || i.status === status)
+    );
+}
 
-        if (id) {
-            const antiga = db.get('diarias').find(d => d.id === parseInt(id));
-            db.update('diarias', parseInt(id), data);
-            const motorista = db.getMotoristas().find(m => m.id === motoristaId);
-            if (motorista) {
-                motorista.totalDiarias = (motorista.totalDiarias || 0) - (antiga.valor || 0) + valor;
-                db.update('motoristas', motoristaId, motorista);
-            }
-        } else {
-            db.add('diarias', data);
-            const motorista = db.getMotoristas().find(m => m.id === motoristaId);
-            if (motorista) {
-                motorista.totalDiarias = (motorista.totalDiarias || 0) + valor;
-                db.update('motoristas', motoristaId, motorista);
-            }
-        }
-        fecharFormulario('diaria');
-        db.atualizarTodos();
-        mostrarAba('diarias');
-    }
+function filtrarCombustivelData(termo='') {
+    const tipo  = document.getElementById('filtroTipoCombustivel')?.value || '';
+    const placa = (document.getElementById('filtroPlacaCombustivel')?.value || '').toLowerCase();
+    return db.getCombustivel().filter(i =>
+        (!termo || i.motoristaNome.toLowerCase().includes(termo) || i.placa.toLowerCase().includes(termo)) &&
+        (!tipo  || i.tipo === tipo) &&
+        (!placa || i.placa.toLowerCase().includes(placa))
+    );
+}
 
-    // ============= FUNÇÕES DE TABELA =============
-    function atualizarTabelaCarradas() {
-        const itens = db.getCarradas();
-        const tbody = document.getElementById('tabelaCarradas');
-        if (!itens.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px">Nenhuma carrada</td></tr>'; return; }
-        
-        tbody.innerHTML = itens.map(i => `
-            <tr>
-                <td><strong>${i.motoristaNome}</strong></td>
-                <td><span class="placa-badge">${i.placa}</span></td>
-                <td>${i.destino}</td>
-                <td>${new Date(i.data).toLocaleDateString('pt-BR')}</td>
-                <td><strong>${i.producao}</strong></td>
-                <td><span class="status-badge status-${i.status === 'finalizado' ? 'finalizado' : i.status === 'em-andamento' ? 'em-andamento' : i.status === 'cancelado' ? 'cancelado' : 'planejado'}">${i.status.toUpperCase()}</span></td>
-                <td>${i.observacoes ? '📝' : '-'}</td>
-                <td class="acoes">
-                    <button class="btn-acoes btn-visualizar" onclick="visualizarCarrada(${i.id})">👁️</button>
-                    <button class="btn-acoes btn-editar" onclick="mostrarFormulario('carrada',${i.id})">✏️</button>
-                    <button class="btn-acoes btn-status" onclick="alterarStatusCarrada(${i.id})">🔄</button>
-                    <button class="btn-acoes btn-excluir" onclick="confirmarExclusao('carrada',${i.id})">🗑️</button>
-                </td>
-            </tr>
-        `).join('');
-    }
+function filtrarOleoData(termo='') {
+    const tipo  = document.getElementById('filtroTipoOleo')?.value || '';
+    const placa = (document.getElementById('filtroPlacaOleo')?.value || '').toLowerCase();
+    return db.getOleo().filter(i =>
+        (!termo || i.motoristaNome.toLowerCase().includes(termo) || i.placa.toLowerCase().includes(termo)) &&
+        (!tipo  || i.tipo === tipo) &&
+        (!placa || i.placa.toLowerCase().includes(placa))
+    );
+}
 
-    function atualizarTabelaMotoristas() {
-        const itens = db.getMotoristas();
-        const tbody = document.getElementById('tabelaMotoristas');
-        if (!itens.length) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px">Nenhum motorista</td></tr>'; return; }
+function filtrarDiariasData(termo='') {
+    const tipo = document.getElementById('filtroTipoDiaria')?.value || '';
+    const mes  = document.getElementById('filtroMesDiaria')?.value || '';
+    return db.getDiarias().filter(i =>
+        (!termo || i.motoristaNome.toLowerCase().includes(termo)) &&
+        (!tipo  || i.tipo === tipo) &&
+        (!mes   || i.data.startsWith(mes))
+    );
+}
 
-        tbody.innerHTML = itens.map(i => `
-            <tr>
-                <td><strong>${i.nome}</strong></td>
-                <td>${i.telefone}</td>
-                <td>${i.admissao ? new Date(i.admissao).toLocaleDateString('pt-BR') : '-'}</td>
-                <td><span class="status-badge ${i.status === 'ativo' ? 'status-finalizado' : i.status === 'inativo' ? 'status-cancelado' : 'status-planejado'}">${i.status.toUpperCase()}</span></td>
-                <td>${i.totalCarradas || 0}</td>
-                <td>${i.producaoTotal || 0}</td>
-                <td>R$ ${(i.totalDiarias || 0).toFixed(2)}</td>
-                <td>${(i.totalCombustivelLitros || 0).toFixed(1)} L</td>
-                <td>${(i.totalOleoLitros || 0).toFixed(1)} L</td>
-                <td class="acoes">
-                    <button class="btn-acoes btn-visualizar" onclick="visualizarMotorista(${i.id})">👁️</button>
-                    <button class="btn-acoes btn-editar" onclick="mostrarFormulario('motorista',${i.id})">✏️</button>
-                    <button class="btn-acoes btn-excluir" onclick="confirmarExclusao('motorista',${i.id})">🗑️</button>
-                </td>
-            </tr>
-        `).join('');
-    }
+// ================================================================
+//  RENDER DAS TABELAS
+// ================================================================
+const STATUS_BADGE = s =>
+    `<span class="status-badge status-${s.replace(' ','-')}">${s.toUpperCase()}</span>`;
 
-    function atualizarTabelaCombustivel() {
-        const itens = db.getCombustivel();
-        const tbody = document.getElementById('tabelaCombustivel');
-        if (!itens.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px">Nenhum abastecimento</td></tr>'; return; }
+const PLACA_BADGE = p =>
+    `<span class="placa-badge">${p}</span>`;
 
-        const tipoMap = { diesel:'DIESEL S10', 'diesel-comum':'DIESEL', gasolina:'GASOLINA', etanol:'ETANOL' };
-        const tipoClass = { diesel:'tipo-diesel', 'diesel-comum':'tipo-diesel', gasolina:'tipo-gasolina', etanol:'tipo-etanol' };
+const BOTOES_CRUD = (tipo, id, comStatus=false) => `
+    <div class="acoes">
+        <button class="btn-acoes btn-visualizar" onclick="visualizar('${tipo}',${id})">👁️</button>
+        <button class="btn-acoes btn-editar"     onclick="mostrarFormulario('${tipo}',${id})">✏️</button>
+        ${comStatus ? `<button class="btn-acoes btn-status" onclick="alterarStatusCarrada(${id})" title="Avançar status">🔄</button>` : ''}
+        <button class="btn-acoes btn-excluir"    onclick="pedirConfirmacao('Excluir este registro?',()=>excluir('${tipo}',${id}))">🗑️</button>
+    </div>`;
 
-        tbody.innerHTML = itens.map(i => `
-            <tr>
-                <td><strong>${i.motoristaNome}</strong></td>
-                <td><span class="placa-badge">${i.placa}</span></td>
-                <td><span class="tipo-badge ${tipoClass[i.tipo]}">${tipoMap[i.tipo] || i.tipo}</span></td>
-                <td>${i.litros.toFixed(1)} L</td>
-                <td>R$ ${i.valorLitro.toFixed(2)}</td>
-                <td><strong>R$ ${i.valorTotal.toFixed(2)}</strong></td>
-                <td>${new Date(i.data).toLocaleDateString('pt-BR')}</td>
-                <td>${i.quilometragem || '-'}</td>
-                <td class="acoes">
-                    <button class="btn-acoes btn-visualizar" onclick="visualizarCombustivel(${i.id})">👁️</button>
-                    <button class="btn-acoes btn-editar" onclick="mostrarFormulario('combustivel',${i.id})">✏️</button>
-                    <button class="btn-acoes btn-excluir" onclick="confirmarExclusao('combustivel',${i.id})">🗑️</button>
-                </td>
-            </tr>
-        `).join('');
-    }
+function renderCarradas(itens) {
+    const tbody = document.getElementById('tabelaCarradas');
+    if (!itens.length) { tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:#888">Nenhuma carrada encontrada</td></tr>`; return; }
+    tbody.innerHTML = itens.map(i => {
+        const totalCarrada = (i.producao||0) * (i.valor||0);
+        return `
+        <tr>
+            <td><strong>${i.motoristaNome}</strong></td>
+            <td>${PLACA_BADGE(i.placa)}</td>
+            <td>${i.destino}</td>
+            <td>${formatDate(i.data)}</td>
+            <td><strong>${i.producao}</strong></td>
+            <td>${i.valor ? moeda(i.valor) : '-'}</td>
+            <td><strong style="color:#27ae60;font-size:1.1em">${totalCarrada > 0 ? moeda(totalCarrada) : '-'}</strong></td>
+            <td>${STATUS_BADGE(i.status)}</td>
+            <td>${i.observacoes ? `<span title="${i.observacoes}">📝</span>` : '-'}</td>
+            <td>${BOTOES_CRUD('carrada', i.id, true)}</td>
+        </tr>`;
+    }).join('');
+}
 
-    function atualizarTabelaOleo() {
-        const itens = db.getOleo();
-        const tbody = document.getElementById('tabelaOleo');
-        if (!itens.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px">Nenhum abastecimento</td></tr>'; return; }
+function renderMotoristas(itens) {
+    const tbody = document.getElementById('tabelaMotoristas');
+    if (!itens.length) { tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:#888">Nenhum motorista encontrado</td></tr>`; return; }
+    tbody.innerHTML = itens.map(i => `
+        <tr>
+            <td><strong>${i.nome}</strong></td>
+            <td>${i.telefone}</td>
+            <td>${formatDate(i.admissao)}</td>
+            <td><span class="status-badge ${i.status==='ativo'?'status-finalizado':i.status==='inativo'?'status-cancelado':'status-planejado'}">${i.status.toUpperCase()}</span></td>
+            <td>${i.totalCarradas||0}</td>
+            <td>${i.producaoTotal||0}</td>
+            <td>${moeda(i.totalDiarias||0)}</td>
+            <td>${(i.totalCombustivelLitros||0).toFixed(1)} L</td>
+            <td>${(i.totalOleoLitros||0).toFixed(1)} L</td>
+            <td>${BOTOES_CRUD('motorista', i.id)}</td>
+        </tr>`).join('');
+}
 
-        const tipoMap = { motor:'ÓLEO MOTOR', transmissao:'TRANSMISSÃO', hidraulico:'HIDRÁULICO', diferencial:'DIFERENCIAL' };
+const TIPO_COMB_MAP  = { diesel:'DIESEL S10', 'diesel-comum':'DIESEL COMUM', gasolina:'GASOLINA', etanol:'ETANOL' };
+const TIPO_COMB_CLS  = { diesel:'tipo-diesel', 'diesel-comum':'tipo-diesel', gasolina:'tipo-gasolina', etanol:'tipo-etanol' };
+const TIPO_OLEO_MAP  = { motor:'ÓLEO MOTOR', transmissao:'TRANSMISSÃO', hidraulico:'HIDRÁULICO', diferencial:'DIFERENCIAL' };
 
-        tbody.innerHTML = itens.map(i => `
-            <tr>
-                <td><strong>${i.motoristaNome}</strong></td>
-                <td><span class="placa-badge">${i.placa}</span></td>
-                <td><span class="tipo-badge tipo-oleo">${tipoMap[i.tipo] || i.tipo}</span></td>
-                <td>${i.litros.toFixed(1)} L</td>
-                <td>R$ ${i.valorLitro.toFixed(2)}</td>
-                <td><strong>R$ ${i.valorTotal.toFixed(2)}</strong></td>
-                <td>${new Date(i.data).toLocaleDateString('pt-BR')}</td>
-                <td>${i.quilometragem || '-'}</td>
-                <td class="acoes">
-                    <button class="btn-acoes btn-visualizar" onclick="visualizarOleo(${i.id})">👁️</button>
-                    <button class="btn-acoes btn-editar" onclick="mostrarFormulario('oleo',${i.id})">✏️</button>
-                    <button class="btn-acoes btn-excluir" onclick="confirmarExclusao('oleo',${i.id})">🗑️</button>
-                </td>
-            </tr>
-        `).join('');
-    }
+function renderCombustivel(itens) {
+    const tbody = document.getElementById('tabelaCombustivel');
+    if (!itens.length) { tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:#888">Nenhum abastecimento encontrado</td></tr>`; return; }
+    tbody.innerHTML = itens.map(i => `
+        <tr>
+            <td><strong>${i.motoristaNome}</strong></td>
+            <td>${PLACA_BADGE(i.placa)}</td>
+            <td><span class="tipo-badge ${TIPO_COMB_CLS[i.tipo]||'tipo-diesel'}">${TIPO_COMB_MAP[i.tipo]||i.tipo}</span></td>
+            <td>${i.litros.toFixed(1)} L</td>
+            <td>${moeda(i.valorLitro)}</td>
+            <td><strong>${moeda(i.valorTotal)}</strong></td>
+            <td>${formatDate(i.data)}</td>
+            <td>${i.quilometragem||'-'}</td>
+            <td>${BOTOES_CRUD('combustivel', i.id)}</td>
+        </tr>`).join('');
+}
 
-    function atualizarTabelaDiarias() {
-        const itens = db.getDiarias();
-        const tbody = document.getElementById('tabelaDiarias');
-        if (!itens.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px">Nenhuma diária</td></tr>'; return; }
+function renderOleo(itens) {
+    const tbody = document.getElementById('tabelaOleo');
+    if (!itens.length) { tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:#888">Nenhum abastecimento encontrado</td></tr>`; return; }
+    tbody.innerHTML = itens.map(i => `
+        <tr>
+            <td><strong>${i.motoristaNome}</strong></td>
+            <td>${PLACA_BADGE(i.placa)}</td>
+            <td><span class="tipo-badge tipo-oleo">${TIPO_OLEO_MAP[i.tipo]||i.tipo}</span></td>
+            <td>${i.litros.toFixed(1)} L</td>
+            <td>${moeda(i.valorLitro)}</td>
+            <td><strong>${moeda(i.valorTotal)}</strong></td>
+            <td>${formatDate(i.data)}</td>
+            <td>${i.quilometragem||'-'}</td>
+            <td>${BOTOES_CRUD('oleo', i.id)}</td>
+        </tr>`).join('');
+}
 
-        const tipoMap = { normal:'NORMAL', extra:'EXTRA', viagem:'VIAGEM' };
-        tbody.innerHTML = itens.map(i => `
-            <tr>
-                <td><strong>${i.motoristaNome}</strong></td>
-                <td>${new Date(i.data).toLocaleDateString('pt-BR')}</td>
-                <td><span class="status-badge status-planejado">${tipoMap[i.tipo] || i.tipo}</span></td>
-                <td><strong>R$ ${i.valor.toFixed(2)}</strong></td>
-                <td>${i.observacoes || '-'}</td>
-                <td class="acoes">
-                    <button class="btn-acoes btn-visualizar" onclick="visualizarDiaria(${i.id})">👁️</button>
-                    <button class="btn-acoes btn-editar" onclick="mostrarFormulario('diaria',${i.id})">✏️</button>
-                    <button class="btn-acoes btn-excluir" onclick="confirmarExclusao('diaria',${i.id})">🗑️</button>
-                </td>
-            </tr>
-        `).join('');
-    }
+function renderDiarias(itens) {
+    const TIPO_MAP = { normal:'NORMAL', extra:'EXTRA', viagem:'VIAGEM' };
+    const tbody = document.getElementById('tabelaDiarias');
+    if (!itens.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:#888">Nenhuma diária encontrada</td></tr>`; return; }
+    tbody.innerHTML = itens.map(i => `
+        <tr>
+            <td><strong>${i.motoristaNome}</strong></td>
+            <td>${formatDate(i.data)}</td>
+            <td><span class="status-badge status-planejado">${TIPO_MAP[i.tipo]||i.tipo}</span></td>
+            <td><strong>${moeda(i.valor)}</strong></td>
+            <td>${i.observacoes||'-'}</td>
+            <td>${BOTOES_CRUD('diaria', i.id)}</td>
+        </tr>`).join('');
+}
 
-    function atualizarTabelaProducao() {
-        const prod = db.getProducaoPorMotorista();
-        document.getElementById('producaoTotalGeral').textContent = db.getProducaoTotal();
-        document.getElementById('totalCombustivelGeral').textContent = db.getTotalCombustivelLitros().toFixed(1) + ' L';
-        document.getElementById('totalOleoGeral').textContent = db.getTotalOleoLitros().toFixed(1) + ' L';
-        document.getElementById('custoCombustivelGeral').textContent = 'R$ ' + db.getTotalCombustivelCusto().toFixed(2);
+function renderProducao() {
+    const prod = db.getProducaoPorMotorista();
+    document.getElementById('producaoTotalGeral').textContent        = db.getProducaoTotal();
+    document.getElementById('totalValorCarradasGeral').textContent   = moeda(db.getTotalValorCarradas());
+    document.getElementById('totalCombustivelGeral').textContent     = db.getTotalCombustivelLitros().toFixed(1) + ' L';
+    document.getElementById('totalOleoGeral').textContent            = db.getTotalOleoLitros().toFixed(1) + ' L';
+    document.getElementById('custoCombustivelGeral').textContent     = moeda(db.getTotalCombustivelCusto());
 
-        const tbody = document.getElementById('tabelaProducaoMotoristas');
-        if (!prod.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px">Sem dados</td></tr>'; return; }
-
-        prod.sort((a,b) => (b.producaoTotal||0) - (a.producaoTotal||0));
-        tbody.innerHTML = prod.map(p => `
+    // Tabela resumo por motorista
+    const tbody = document.getElementById('tabelaProducaoMotoristas');
+    if (!prod.length) { tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:40px">Sem dados</td></tr>`; }
+    else {
+        const sorted = [...prod].sort((a,b)=>(b.producaoTotal||0)-(a.producaoTotal||0));
+        tbody.innerHTML = sorted.map(p => {
+            const custoTotal = (p.totalCombustivelCusto||0) + (p.totalOleoCusto||0) + (p.totalDiarias||0);
+            const resultado  = (p.totalValorCarradas||0) - custoTotal;
+            return `
             <tr>
                 <td><strong>${p.nome}</strong></td>
                 <td>${p.totalCarradas}</td>
                 <td><strong>${p.producaoTotal}</strong></td>
-                <td>R$ ${(p.totalDiarias||0).toFixed(2)}</td>
+                <td><strong style="color:#27ae60">${moeda(p.totalValorCarradas||0)}</strong></td>
+                <td>${moeda(p.totalDiarias||0)}</td>
                 <td>${(p.totalCombustivelLitros||0).toFixed(1)} L</td>
-                <td>R$ ${(p.totalCombustivelCusto||0).toFixed(2)}</td>
+                <td>${moeda(p.totalCombustivelCusto||0)}</td>
                 <td>${(p.totalOleoLitros||0).toFixed(1)} L</td>
-                <td>R$ ${(p.totalOleoCusto||0).toFixed(2)}</td>
-                <td><span class="status-badge ${p.producaoTotal > 50 ? 'status-finalizado' : 'status-planejado'}">${p.producaoTotal > 50 ? '⭐ DESTAQUE' : p.producaoTotal > 20 ? '👍 BOM' : '👌 REGULAR'}</span></td>
-            </tr>
-        `).join('');
+                <td>${moeda(p.totalOleoCusto||0)}</td>
+                <td><strong>${moeda(custoTotal)}</strong></td>
+                <td><strong style="color:${resultado>=0?'#27ae60':'#e74c3c'}">${moeda(resultado)}</strong></td>
+                <td><span class="status-badge ${p.producaoTotal>50?'status-finalizado':'status-planejado'}">${p.producaoTotal>50?'⭐ DESTAQUE':p.producaoTotal>20?'👍 BOM':'👌 REGULAR'}</span></td>
+            </tr>`;
+        }).join('');
     }
 
-    function atualizarDashboardVisual() {
-        const combustivel = db.getCombustivel().slice(0, 3);
-        const emAndamento = db.getCarradas().filter(c => c.status === 'em-andamento').length;
-        const destaque = db.getMotoristaDestaque();
-        const custoTotal = db.getTotalCombustivelCusto() + db.getTotalOleoCusto();
-
-        document.getElementById('carradasAndamento').textContent = emAndamento;
-        document.getElementById('motoristaDestaque').textContent = destaque?.nome || '-';
-        document.getElementById('custoTotal').textContent = 'R$ ' + custoTotal.toFixed(2);
-
-        const grid = document.getElementById('gridAbastecimentosRecentes');
-        if (!combustivel.length) {
-            grid.innerHTML = '<p style="text-align:center;grid-column:1/-1">Nenhum abastecimento recente</p>';
-        } else {
-            grid.innerHTML = combustivel.map(c => `
-                <div class="info-card">
-                    <h4>⛽ Abastecimento</h4>
-                    <div class="placa-destaque">${c.placa}</div>
-                    <div class="valor-destaque">${c.litros.toFixed(1)} L</div>
-                    <div class="info"><strong>Motorista:</strong> ${c.motoristaNome}</div>
-                    <div class="info"><strong>Tipo:</strong> ${c.tipo.toUpperCase()}</div>
-                    <div class="info"><strong>Valor:</strong> R$ ${c.valorTotal.toFixed(2)}</div>
-                    <div class="info"><strong>Data:</strong> ${new Date(c.data).toLocaleDateString('pt-BR')}</div>
-                </div>
-            `).join('');
-        }
-    }
-
-    // ============= FILTROS E PESQUISA =============
-    function pesquisarGlobal() {
-        const termo = document.getElementById('pesquisaGlobal').value.toLowerCase();
-        if (document.getElementById('abaCarradas').style.display !== 'none') filtrarCarradas(termo);
-        else if (document.getElementById('abaMotoristas').style.display !== 'none') filtrarMotoristas(termo);
-        else if (document.getElementById('abaCombustivel').style.display !== 'none') filtrarCombustivel(termo);
-        else if (document.getElementById('abaOleo').style.display !== 'none') filtrarOleo(termo);
-        else if (document.getElementById('abaDiarias').style.display !== 'none') filtrarDiarias(termo);
-    }
-
-    function limparPesquisa() { document.getElementById('pesquisaGlobal').value = ''; pesquisarGlobal(); }
-
-    function filtrarCarradas(termo = '') {
-        const status = document.getElementById('filtroStatusCarrada').value;
-        const placa = document.getElementById('filtroPlacaCarrada').value.toLowerCase();
-        let itens = db.getCarradas();
-        if (termo) itens = itens.filter(i => i.motoristaNome.toLowerCase().includes(termo) || i.placa.toLowerCase().includes(termo) || i.destino.toLowerCase().includes(termo));
-        if (status) itens = itens.filter(i => i.status === status);
-        if (placa) itens = itens.filter(i => i.placa.toLowerCase().includes(placa));
-        renderCarradas(itens);
-    }
-
-    function filtrarMotoristas(termo = '') {
-        const status = document.getElementById('filtroStatusMotorista').value;
-        let itens = db.getMotoristas();
-        if (termo) itens = itens.filter(i => i.nome.toLowerCase().includes(termo) || i.telefone.includes(termo));
-        if (status) itens = itens.filter(i => i.status === status);
-        renderMotoristas(itens);
-    }
-
-    function filtrarCombustivel(termo = '') {
-        const tipo = document.getElementById('filtroTipoCombustivel').value;
-        const placa = document.getElementById('filtroPlacaCombustivel').value.toLowerCase();
-        let itens = db.getCombustivel();
-        if (termo) itens = itens.filter(i => i.motoristaNome.toLowerCase().includes(termo) || i.placa.toLowerCase().includes(termo));
-        if (tipo) itens = itens.filter(i => i.tipo === tipo);
-        if (placa) itens = itens.filter(i => i.placa.toLowerCase().includes(placa));
-        renderCombustivel(itens);
-    }
-
-    function filtrarOleo(termo = '') {
-        const tipo = document.getElementById('filtroTipoOleo').value;
-        const placa = document.getElementById('filtroPlacaOleo').value.toLowerCase();
-        let itens = db.getOleo();
-        if (termo) itens = itens.filter(i => i.motoristaNome.toLowerCase().includes(termo) || i.placa.toLowerCase().includes(termo));
-        if (tipo) itens = itens.filter(i => i.tipo === tipo);
-        if (placa) itens = itens.filter(i => i.placa.toLowerCase().includes(placa));
-        renderOleo(itens);
-    }
-
-    function filtrarDiarias(termo = '') {
-        const tipo = document.getElementById('filtroTipoDiaria').value;
-        const mes = document.getElementById('filtroMesDiaria').value;
-        let itens = db.getDiarias();
-        if (termo) itens = itens.filter(i => i.motoristaNome.toLowerCase().includes(termo));
-        if (tipo) itens = itens.filter(i => i.tipo === tipo);
-        if (mes) itens = itens.filter(i => i.data.startsWith(mes));
-        renderDiarias(itens);
-    }
-
-    function renderCarradas(itens) {
-        const tbody = document.getElementById('tabelaCarradas');
-        if (!itens.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px">Nenhuma carrada</td></tr>'; return; }
-        tbody.innerHTML = itens.map(i => `
+    // Tabela detalhada: carradas
+    const carradas = db.getCarradas();
+    const tbodyC = document.getElementById('tabelaProducaoCarradas');
+    if (!carradas.length) {
+        tbodyC.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:#888">Nenhuma carrada</td></tr>`;
+    } else {
+        tbodyC.innerHTML = carradas.map(c => `
             <tr>
-                <td><strong>${i.motoristaNome}</strong></td>
-                <td><span class="placa-badge">${i.placa}</span></td>
-                <td>${i.destino}</td>
-                <td>${new Date(i.data).toLocaleDateString('pt-BR')}</td>
-                <td><strong>${i.producao}</strong></td>
-                <td><span class="status-badge status-${i.status === 'finalizado' ? 'finalizado' : i.status === 'em-andamento' ? 'em-andamento' : i.status === 'cancelado' ? 'cancelado' : 'planejado'}">${i.status.toUpperCase()}</span></td>
-                <td>${i.observacoes ? '📝' : '-'}</td>
-                <td class="acoes">
-                    <button class="btn-acoes btn-visualizar" onclick="visualizarCarrada(${i.id})">👁️</button>
-                    <button class="btn-acoes btn-editar" onclick="mostrarFormulario('carrada',${i.id})">✏️</button>
-                    <button class="btn-acoes btn-status" onclick="alterarStatusCarrada(${i.id})">🔄</button>
-                    <button class="btn-acoes btn-excluir" onclick="confirmarExclusao('carrada',${i.id})">🗑️</button>
-                </td>
-            </tr>
-        `).join('');
+                <td><strong>${c.motoristaNome}</strong></td>
+                <td>${PLACA_BADGE(c.placa)}</td>
+                <td>${c.destino}</td>
+                <td>${formatDate(c.data)}</td>
+                <td><strong>${c.producao}</strong></td>
+                <td><strong style="color:#27ae60">${c.valor ? moeda(c.valor) : '-'}</strong></td>
+                <td>${STATUS_BADGE(c.status)}</td>
+            </tr>`).join('');
     }
 
-    function renderMotoristas(itens) {
-        const tbody = document.getElementById('tabelaMotoristas');
-        if (!itens.length) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px">Nenhum motorista</td></tr>'; return; }
-        tbody.innerHTML = itens.map(i => `
+    // Tabela detalhada: combustível
+    const comb = db.getCombustivel();
+    const tbodyF = document.getElementById('tabelaProducaoCombustivel');
+    if (!comb.length) {
+        tbodyF.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:#888">Nenhum abastecimento</td></tr>`;
+    } else {
+        tbodyF.innerHTML = comb.map(c => `
             <tr>
-                <td><strong>${i.nome}</strong></td>
-                <td>${i.telefone}</td>
-                <td>${i.admissao ? new Date(i.admissao).toLocaleDateString('pt-BR') : '-'}</td>
-                <td><span class="status-badge ${i.status === 'ativo' ? 'status-finalizado' : i.status === 'inativo' ? 'status-cancelado' : 'status-planejado'}">${i.status.toUpperCase()}</span></td>
-                <td>${i.totalCarradas || 0}</td>
-                <td>${i.producaoTotal || 0}</td>
-                <td>R$ ${(i.totalDiarias || 0).toFixed(2)}</td>
-                <td>${(i.totalCombustivelLitros || 0).toFixed(1)} L</td>
-                <td>${(i.totalOleoLitros || 0).toFixed(1)} L</td>
-                <td class="acoes">
-                    <button class="btn-acoes btn-visualizar" onclick="visualizarMotorista(${i.id})">👁️</button>
-                    <button class="btn-acoes btn-editar" onclick="mostrarFormulario('motorista',${i.id})">✏️</button>
-                    <button class="btn-acoes btn-excluir" onclick="confirmarExclusao('motorista',${i.id})">🗑️</button>
-                </td>
-            </tr>
-        `).join('');
+                <td><strong>${c.motoristaNome}</strong></td>
+                <td>${PLACA_BADGE(c.placa)}</td>
+                <td><span class="tipo-badge ${TIPO_COMB_CLS[c.tipo]||'tipo-diesel'}">${TIPO_COMB_MAP[c.tipo]||c.tipo}</span></td>
+                <td>${c.litros.toFixed(1)} L</td>
+                <td>${moeda(c.valorLitro)}</td>
+                <td><strong>${moeda(c.valorTotal)}</strong></td>
+                <td>${formatDate(c.data)}</td>
+                <td>${c.quilometragem||'-'}</td>
+            </tr>`).join('');
+    }
+}
+
+function renderDashboard() {
+    const recentes    = db.getCombustivel().slice(0, 4);
+    const emAndamento = db.getCarradas().filter(c=>c.status==='em-andamento').length;
+    const destaque    = db.getMotoristaDestaque();
+    const custoTotal  = db.getTotalCombustivelCusto() + db.getTotalOleoCusto();
+    const nCarradas   = db.getTotalCarradas();
+
+    document.getElementById('carradasAndamento').textContent  = emAndamento;
+    document.getElementById('motoristaDestaque').textContent  = destaque?.nome || '-';
+    document.getElementById('custoTotal').textContent         = moeda(custoTotal);
+    document.getElementById('custoMedioCarrada').textContent  = moeda(nCarradas ? custoTotal / nCarradas : 0);
+
+    const grid = document.getElementById('gridAbastecimentosRecentes');
+    grid.innerHTML = recentes.length
+        ? recentes.map(c => `
+            <div class="info-card">
+                <h4>⛽ Abastecimento</h4>
+                <div class="placa-destaque">${c.placa}</div>
+                <div class="valor-destaque">${c.litros.toFixed(1)} L</div>
+                <p><strong>Motorista:</strong> ${c.motoristaNome}</p>
+                <p><strong>Tipo:</strong> ${TIPO_COMB_MAP[c.tipo]||c.tipo}</p>
+                <p><strong>Valor:</strong> ${moeda(c.valorTotal)}</p>
+                <p><strong>Data:</strong> ${formatDate(c.data)}</p>
+            </div>`).join('')
+        : '<p style="text-align:center;grid-column:1/-1;color:#888">Nenhum abastecimento recente</p>';
+}
+
+// ================================================================
+//  FORMULÁRIOS
+// ================================================================
+const FORMS_COM_MOTORISTA = ['carrada','combustivel','oleo','diaria'];
+
+function mostrarFormulario(tipo, id = null) {
+    fecharTodosFormularios();
+    const formEl = document.getElementById(`form${tipo.charAt(0).toUpperCase()+tipo.slice(1)}`);
+    formEl.style.display = 'block';
+    limparCampos(tipo);
+
+    // FIX: diária também precisa de lista de motoristas
+    if (FORMS_COM_MOTORISTA.includes(tipo)) carregarMotoristasSelect(tipo);
+
+    if (id) {
+        document.getElementById(`${tipo.charAt(0).toUpperCase()+tipo.slice(1)}`.charAt(0).toLowerCase() + 'tituloForm'.slice(0));
+        document.getElementById(`tituloForm${tipo.charAt(0).toUpperCase()+tipo.slice(1)}`).textContent =
+            { carrada:'✏️ EDITAR CARRADA', motorista:'✏️ EDITAR MOTORISTA', combustivel:'✏️ EDITAR ABASTECIMENTO', oleo:'✏️ EDITAR ÓLEO', diaria:'✏️ EDITAR DIÁRIA' }[tipo];
+        carregarDadosEdicao(tipo, id);
+    } else {
+        // FIX: preenche data de hoje para novos registros
+        const campoData = document.getElementById(`${tipo}Data`);
+        if (campoData) campoData.value = hoje();
+        document.getElementById(`tituloForm${tipo.charAt(0).toUpperCase()+tipo.slice(1)}`).textContent =
+            { carrada:'🚛 NOVA CARRADA', motorista:'👤 NOVO MOTORISTA', combustivel:'⛽ NOVO ABASTECIMENTO', oleo:'🛢️ NOVO ABASTECIMENTO ÓLEO', diaria:'💰 NOVA DIÁRIA' }[tipo];
     }
 
-    function renderCombustivel(itens) {
-        const tbody = document.getElementById('tabelaCombustivel');
-        if (!itens.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px">Nenhum abastecimento</td></tr>'; return; }
-        const tipoMap = { diesel:'DIESEL S10', 'diesel-comum':'DIESEL', gasolina:'GASOLINA', etanol:'ETANOL' };
-        const tipoClass = { diesel:'tipo-diesel', 'diesel-comum':'tipo-diesel', gasolina:'tipo-gasolina', etanol:'tipo-etanol' };
-        tbody.innerHTML = itens.map(i => `
-            <tr>
-                <td><strong>${i.motoristaNome}</strong></td>
-                <td><span class="placa-badge">${i.placa}</span></td>
-                <td><span class="tipo-badge ${tipoClass[i.tipo]}">${tipoMap[i.tipo] || i.tipo}</span></td>
-                <td>${i.litros.toFixed(1)} L</td>
-                <td>R$ ${i.valorLitro.toFixed(2)}</td>
-                <td><strong>R$ ${i.valorTotal.toFixed(2)}</strong></td>
-                <td>${new Date(i.data).toLocaleDateString('pt-BR')}</td>
-                <td>${i.quilometragem || '-'}</td>
-                <td class="acoes">
-                    <button class="btn-acoes btn-visualizar" onclick="visualizarCombustivel(${i.id})">👁️</button>
-                    <button class="btn-acoes btn-editar" onclick="mostrarFormulario('combustivel',${i.id})">✏️</button>
-                    <button class="btn-acoes btn-excluir" onclick="confirmarExclusao('combustivel',${i.id})">🗑️</button>
-                </td>
-            </tr>
-        `).join('');
-    }
+    formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
-    function renderOleo(itens) {
-        const tbody = document.getElementById('tabelaOleo');
-        if (!itens.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px">Nenhum abastecimento</td></tr>'; return; }
-        const tipoMap = { motor:'ÓLEO MOTOR', transmissao:'TRANSMISSÃO', hidraulico:'HIDRÁULICO', diferencial:'DIFERENCIAL' };
-        tbody.innerHTML = itens.map(i => `
-            <tr>
-                <td><strong>${i.motoristaNome}</strong></td>
-                <td><span class="placa-badge">${i.placa}</span></td>
-                <td><span class="tipo-badge tipo-oleo">${tipoMap[i.tipo] || i.tipo}</span></td>
-                <td>${i.litros.toFixed(1)} L</td>
-                <td>R$ ${i.valorLitro.toFixed(2)}</td>
-                <td><strong>R$ ${i.valorTotal.toFixed(2)}</strong></td>
-                <td>${new Date(i.data).toLocaleDateString('pt-BR')}</td>
-                <td>${i.quilometragem || '-'}</td>
-                <td class="acoes">
-                    <button class="btn-acoes btn-visualizar" onclick="visualizarOleo(${i.id})">👁️</button>
-                    <button class="btn-acoes btn-editar" onclick="mostrarFormulario('oleo',${i.id})">✏️</button>
-                    <button class="btn-acoes btn-excluir" onclick="confirmarExclusao('oleo',${i.id})">🗑️</button>
-                </td>
-            </tr>
-        `).join('');
-    }
+function fecharFormulario(tipo) {
+    document.getElementById(`form${tipo.charAt(0).toUpperCase()+tipo.slice(1)}`).style.display = 'none';
+}
+function fecharTodosFormularios() {
+    ['carrada','motorista','combustivel','oleo','diaria'].forEach(fecharFormulario);
+}
 
-    function renderDiarias(itens) {
-        const tbody = document.getElementById('tabelaDiarias');
-        if (!itens.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px">Nenhuma diária</td></tr>'; return; }
-        const tipoMap = { normal:'NORMAL', extra:'EXTRA', viagem:'VIAGEM' };
-        tbody.innerHTML = itens.map(i => `
-            <tr>
-                <td><strong>${i.motoristaNome}</strong></td>
-                <td>${new Date(i.data).toLocaleDateString('pt-BR')}</td>
-                <td><span class="status-badge status-planejado">${tipoMap[i.tipo] || i.tipo}</span></td>
-                <td><strong>R$ ${i.valor.toFixed(2)}</strong></td>
-                <td>${i.observacoes || '-'}</td>
-                <td class="acoes">
-                    <button class="btn-acoes btn-visualizar" onclick="visualizarDiaria(${i.id})">👁️</button>
-                    <button class="btn-acoes btn-editar" onclick="mostrarFormulario('diaria',${i.id})">✏️</button>
-                    <button class="btn-acoes btn-excluir" onclick="confirmarExclusao('diaria',${i.id})">🗑️</button>
-                </td>
-            </tr>
-        `).join('');
-    }
+function val(id) { return document.getElementById(id).value; }
+function set(id, v) { document.getElementById(id).value = v; }
 
-    // ============= VISUALIZAÇÃO =============
-    function visualizarCarrada(id) {
-        const i = db.get('carradas').find(x => x.id === id);
-        if (!i) return;
-        document.getElementById('visualizarTitulo').textContent = '🚛 DETALHES';
-        document.getElementById('visualizarConteudo').innerHTML = `
-            <p><strong>Motorista:</strong> ${i.motoristaNome}</p>
-            <p><strong>Placa:</strong> <span class="placa-badge">${i.placa}</span></p>
-            <p><strong>Destino:</strong> ${i.destino}</p>
-            <p><strong>Data:</strong> ${new Date(i.data).toLocaleDateString('pt-BR')}</p>
-            <p><strong>Produção:</strong> ${i.producao}</p>
-            <p><strong>Status:</strong> <span class="status-badge status-${i.status}">${i.status.toUpperCase()}</span></p>
-            <p><strong>Obs:</strong> ${i.observacoes || '-'}</p>
-        `;
-        document.getElementById('dialogVisualizar').style.display = 'block';
-    }
-
-    function visualizarMotorista(id) {
-        const i = db.getMotoristas().find(x => x.id === id);
-        if (!i) return;
-        document.getElementById('visualizarTitulo').textContent = '👤 DETALHES';
-        document.getElementById('visualizarConteudo').innerHTML = `
-            <p><strong>Nome:</strong> ${i.nome}</p>
-            <p><strong>Telefone:</strong> ${i.telefone}</p>
-            <p><strong>Admissão:</strong> ${i.admissao ? new Date(i.admissao).toLocaleDateString('pt-BR') : '-'}</p>
-            <p><strong>Status:</strong> <span class="status-badge ${i.status === 'ativo' ? 'status-finalizado' : i.status === 'inativo' ? 'status-cancelado' : 'status-planejado'}">${i.status.toUpperCase()}</span></p>
-            <p><strong>Carradas:</strong> ${i.totalCarradas || 0}</p>
-            <p><strong>Produção:</strong> ${i.producaoTotal || 0}</p>
-            <p><strong>Diárias:</strong> R$ ${(i.totalDiarias || 0).toFixed(2)}</p>
-            <p><strong>Combustível:</strong> ${(i.totalCombustivelLitros || 0).toFixed(1)} L (R$ ${(i.totalCombustivelCusto || 0).toFixed(2)})</p>
-            <p><strong>Óleo:</strong> ${(i.totalOleoLitros || 0).toFixed(1)} L (R$ ${(i.totalOleoCusto || 0).toFixed(2)})</p>
-            <p><strong>Combustível Preferencial:</strong> ${i.combustivelPreferencial || 'não definido'}</p>
-            <p><strong>Obs:</strong> ${i.observacoes || '-'}</p>
-        `;
-        document.getElementById('dialogVisualizar').style.display = 'block';
-    }
-
-    function visualizarCombustivel(id) {
-        const i = db.get('abastecimentosCombustivel').find(x => x.id === id);
-        if (!i) return;
-        const tipoMap = { diesel:'DIESEL S10', 'diesel-comum':'DIESEL', gasolina:'GASOLINA', etanol:'ETANOL' };
-        document.getElementById('visualizarTitulo').textContent = '⛽ DETALHES';
-        document.getElementById('visualizarConteudo').innerHTML = `
-            <p><strong>Motorista:</strong> ${i.motoristaNome}</p>
-            <p><strong>Placa:</strong> <span class="placa-badge">${i.placa}</span></p>
-            <p><strong>Tipo:</strong> ${tipoMap[i.tipo] || i.tipo}</p>
-            <p><strong>Litros:</strong> ${i.litros.toFixed(1)} L</p>
-            <p><strong>Valor/L:</strong> R$ ${i.valorLitro.toFixed(2)}</p>
-            <p><strong>Valor Total:</strong> R$ ${i.valorTotal.toFixed(2)}</p>
-            <p><strong>Data:</strong> ${new Date(i.data).toLocaleDateString('pt-BR')}</p>
-            <p><strong>Km:</strong> ${i.quilometragem || '-'}</p>
-            <p><strong>Obs:</strong> ${i.observacoes || '-'}</p>
-        `;
-        document.getElementById('dialogVisualizar').style.display = 'block';
-    }
-
-    function visualizarOleo(id) {
-        const i = db.get('abastecimentosOleo').find(x => x.id === id);
-        if (!i) return;
-        const tipoMap = { motor:'ÓLEO MOTOR', transmissao:'TRANSMISSÃO', hidraulico:'HIDRÁULICO', diferencial:'DIFERENCIAL' };
-        document.getElementById('visualizarTitulo').textContent = '🛢️ DETALHES';
-        document.getElementById('visualizarConteudo').innerHTML = `
-            <p><strong>Motorista:</strong> ${i.motoristaNome}</p>
-            <p><strong>Placa:</strong> <span class="placa-badge">${i.placa}</span></p>
-            <p><strong>Tipo:</strong> ${tipoMap[i.tipo] || i.tipo}</p>
-            <p><strong>Litros:</strong> ${i.litros.toFixed(1)} L</p>
-            <p><strong>Valor/L:</strong> R$ ${i.valorLitro.toFixed(2)}</p>
-            <p><strong>Valor Total:</strong> R$ ${i.valorTotal.toFixed(2)}</p>
-            <p><strong>Data:</strong> ${new Date(i.data).toLocaleDateString('pt-BR')}</p>
-            <p><strong>Km:</strong> ${i.quilometragem || '-'}</p>
-            <p><strong>Obs:</strong> ${i.observacoes || '-'}</p>
-        `;
-        document.getElementById('dialogVisualizar').style.display = 'block';
-    }
-
-    function visualizarDiaria(id) {
-        const i = db.get('diarias').find(x => x.id === id);
-        if (!i) return;
-        const tipoMap = { normal:'NORMAL', extra:'EXTRA', viagem:'VIAGEM' };
-        document.getElementById('visualizarTitulo').textContent = '💰 DETALHES';
-        document.getElementById('visualizarConteudo').innerHTML = `
-            <p><strong>Motorista:</strong> ${i.motoristaNome}</p>
-            <p><strong>Data:</strong> ${new Date(i.data).toLocaleDateString('pt-BR')}</p>
-            <p><strong>Tipo:</strong> ${tipoMap[i.tipo] || i.tipo}</p>
-            <p><strong>Valor:</strong> R$ ${i.valor.toFixed(2)}</p>
-            <p><strong>Obs:</strong> ${i.observacoes || '-'}</p>
-        `;
-        document.getElementById('dialogVisualizar').style.display = 'block';
-    }
-
-    function fecharDialogVisualizar() { document.getElementById('dialogVisualizar').style.display = 'none'; }
-
-    // ============= AÇÕES =============
-    let itemParaExcluir = null;
-    function confirmarExclusao(tipo, id) {
-        itemParaExcluir = { tipo, id };
-        document.getElementById('dialogTitulo').textContent = 'CONFIRMAR EXCLUSÃO';
-        document.getElementById('dialogMensagem').textContent = 'Tem certeza?';
-        document.getElementById('dialogConfirmarBtn').onclick = executarExclusao;
-        document.getElementById('dialogConfirmar').style.display = 'block';
-    }
-
-    function executarExclusao() {
-        if (!itemParaExcluir) return;
-        const { tipo, id } = itemParaExcluir;
-        let colecao;
-        if (tipo === 'carrada') colecao = 'carradas';
-        else if (tipo === 'motorista') colecao = 'motoristas';
-        else if (tipo === 'combustivel') colecao = 'abastecimentosCombustivel';
-        else if (tipo === 'oleo') colecao = 'abastecimentosOleo';
-        else if (tipo === 'diaria') colecao = 'diarias';
-        
-        if (colecao !== 'motoristas') {
-            const item = db.get(colecao).find(i => i.id === id);
-            if (item) {
-                const motorista = db.getMotoristas().find(m => m.id === item.motoristaId);
-                if (motorista) {
-                    if (colecao === 'abastecimentosCombustivel') {
-                        motorista.totalCombustivelLitros = (motorista.totalCombustivelLitros || 0) - (item.litros || 0);
-                        motorista.totalCombustivelCusto = (motorista.totalCombustivelCusto || 0) - (item.valorTotal || 0);
-                    } else if (colecao === 'abastecimentosOleo') {
-                        motorista.totalOleoLitros = (motorista.totalOleoLitros || 0) - (item.litros || 0);
-                        motorista.totalOleoCusto = (motorista.totalOleoCusto || 0) - (item.valorTotal || 0);
-                    } else if (colecao === 'diarias') {
-                        motorista.totalDiarias = (motorista.totalDiarias || 0) - (item.valor || 0);
-                    } else if (colecao === 'carradas') {
-                        motorista.totalCarradas = (motorista.totalCarradas || 0) - 1;
-                        motorista.producaoTotal = (motorista.producaoTotal || 0) - (item.producao || 0);
-                    }
-                    db.update('motoristas', motorista.id, motorista);
-                }
-            }
-        }
-        db.delete(colecao, id);
-        db.atualizarTodos();
-        fecharDialog();
-    }
-
-    function mostrarDialogConfirmacao(tipo) {
-        if (tipo === 'limparDados') {
-            document.getElementById('dialogTitulo').textContent = 'LIMPAR DADOS';
-            document.getElementById('dialogMensagem').textContent = 'Isso apagará todos os dados!';
-            document.getElementById('dialogConfirmarBtn').onclick = limparTodosDados;
-            document.getElementById('dialogConfirmar').style.display = 'block';
-        }
-    }
-
-    function limparTodosDados() {
-        localStorage.clear();
-        db.initData();
-        db.atualizarTodos();
-        fecharDialog();
-    }
-
-    function fecharDialog() { document.getElementById('dialogConfirmar').style.display = 'none'; }
-
-    function alterarStatusCarrada(id) {
-        const item = db.get('carradas').find(c => c.id === id);
-        if (!item) return;
-        const map = { planejado: 'em-andamento', 'em-andamento': 'finalizado', finalizado: 'cancelado', cancelado: 'planejado' };
-        const novo = map[item.status] || 'planejado';
-        db.update('carradas', id, { status: novo });
-        db.atualizarTodos();
-    }
-
-    // ============= EXPORTAÇÃO =============
-    function exportarPlanilha() {
-        const wb = XLSX.utils.book_new();
-        const resumo = [{
-            'Ano': db.anoFiltro,
-            'Total Carradas': db.getTotalCarradas(),
-            'Produção': db.getProducaoTotal(),
-            'Combustível (L)': db.getTotalCombustivelLitros().toFixed(1),
-            'Custo Comb.': db.getTotalCombustivelCusto().toFixed(2),
-            'Óleo (L)': db.getTotalOleoLitros().toFixed(1),
-            'Custo Óleo': db.getTotalOleoCusto().toFixed(2)
-        }];
-        
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumo), "Resumo");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(db.getCarradas().map(c => ({ ...c, data: new Date(c.data).toLocaleDateString('pt-BR') }))), "Carradas");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(db.getCombustivel()), "Combustível");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(db.getOleo()), "Óleo");
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(db.getDiarias()), "Diárias");
-        
-        XLSX.writeFile(wb, `frota_${db.anoFiltro}_${new Date().toISOString().split('T')[0]}.xlsx`);
-    }
-
-    // Inicialização
-    window.onload = () => {
-        db.atualizarDashboard();
-        mostrarAba('dashboard');
+function limparCampos(tipo) {
+    const fields = {
+        carrada:     ['carradaId','carradaPlaca','carradaDestino','carradaData','carradaProducao','carradaValor','carradaObs'],
+        motorista:   ['motoristaId','motoristaNome','motoristaTelefone','motoristaAdmissao','motoristaObs'],
+        combustivel: ['combustivelId','combustivelPlaca','combustivelLitros','combustivelValorLitro','combustivelData','combustivelKm','combustivelObs'],
+        oleo:        ['oleoId','oleoPlaca','oleoLitros','oleoValorLitro','oleoData','oleoKm','oleoObs'],
+        diaria:      ['diariaId','diariaData','diariaValor','diariaObs']
     };
+    (fields[tipo]||[]).forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    if (tipo==='carrada')     { set('carradaStatus','finalizado'); document.getElementById('carradaTotalCalc').textContent='0 un × R$ 0,00 = R$ 0,00'; }
+    if (tipo==='motorista')   { set('motoristaStatus','ativo'); }
+    if (tipo==='combustivel') { set('combustivelTipo','diesel'); document.getElementById('combustivelTotalCalc').textContent='Total: R$ 0,00'; }
+    if (tipo==='oleo')        { set('oleoTipo','motor'); document.getElementById('oleoTotalCalc').textContent='Total: R$ 0,00'; }
+    if (tipo==='diaria')      { set('diariaTipo','normal'); }
+}
+
+function carregarDadosEdicao(tipo, id) {
+    const COL = { carrada:'carradas', motorista:'motoristas', combustivel:'abastecimentosCombustivel', oleo:'abastecimentosOleo', diaria:'diarias' };
+    const item = db.get(COL[tipo]).find(i => i.id === id);
+    if (!item) return;
+
+    set(`${tipo}Id`, item.id);
+    if (tipo==='carrada') {
+        set('carradaMotorista', item.motoristaId);
+        set('carradaPlaca', item.placa);
+        set('carradaDestino', item.destino);
+        set('carradaData', item.data);
+        set('carradaProducao', item.producao);
+        set('carradaValor', item.valor||0);
+        set('carradaStatus', item.status);
+        set('carradaObs', item.observacoes||'');
+    } else if (tipo==='motorista') {
+        set('motoristaNome', item.nome);
+        set('motoristaTelefone', item.telefone);
+        set('motoristaAdmissao', item.admissao||'');
+        set('motoristaStatus', item.status);
+        set('motoristaObs', item.observacoes||'');
+    } else if (tipo==='combustivel') {
+        set('combustivelMotorista', item.motoristaId);
+        set('combustivelPlaca', item.placa);
+        set('combustivelTipo', item.tipo);
+        set('combustivelLitros', item.litros);
+        set('combustivelValorLitro', item.valorLitro);
+        set('combustivelData', item.data);
+        set('combustivelKm', item.quilometragem||'');
+        set('combustivelObs', item.observacoes||'');
+        calcTotal('combustivel');
+    } else if (tipo==='oleo') {
+        set('oleoMotorista', item.motoristaId);
+        set('oleoPlaca', item.placa);
+        set('oleoTipo', item.tipo);
+        set('oleoLitros', item.litros);
+        set('oleoValorLitro', item.valorLitro);
+        set('oleoData', item.data);
+        set('oleoKm', item.quilometragem||'');
+        set('oleoObs', item.observacoes||'');
+        calcTotal('oleo');
+    } else if (tipo==='diaria') {
+        set('diariaMotorista', item.motoristaId);
+        set('diariaData', item.data);
+        set('diariaValor', item.valor);
+        set('diariaTipo', item.tipo);
+        set('diariaObs', item.observacoes||'');
+    }
+}
+
+function carregarMotoristasSelect(tipo) {
+    const select = document.getElementById(`${tipo}Motorista`);
+    if (!select) return;
+    const motoristas = db.getMotoristas();
+    select.innerHTML = '<option value="">— Selecione —</option>' +
+        motoristas.map(m => `<option value="${m.id}" data-nome="${m.nome}">${m.nome}</option>`).join('');
+}
+
+// ================================================================
+//  SALVAR
+// ================================================================
+function getMotoristaFromSelect(tipo) {
+    const sel = document.getElementById(`${tipo}Motorista`);
+    return { id: parseInt(sel.value)||0, nome: sel.options[sel.selectedIndex]?.dataset.nome || '' };
+}
+
+function salvarCarrada() {
+    const id          = parseInt(val('carradaId')) || null;
+    const { id: mId, nome: mNome } = getMotoristaFromSelect('carrada');
+    const placa       = val('carradaPlaca').toUpperCase();
+    const destino     = val('carradaDestino').trim();
+    const data        = val('carradaData');
+    const producao    = parseInt(val('carradaProducao')) || 0;
+    const valor       = parseFloat(val('carradaValor')) || 0;
+    const status      = val('carradaStatus');
+    const observacoes = val('carradaObs').trim();
+
+    if (!mId)         return toast('Selecione um motorista!', 'erro');
+    if (!validarPlaca(placa)) return toast('Placa inválida! Use AAA-1234 ou ABC1D23', 'erro');
+    if (!destino)     return toast('Informe o destino!', 'erro');
+    if (!data)        return toast('Informe a data!', 'erro');
+    if (producao <= 0) return toast('Informe a produção!', 'erro');
+
+    const item = { motoristaId: mId, motoristaNome: mNome, placa, destino, data, producao, valor, status, observacoes };
+
+    // FIX: se motorista mudou na edição, recalcula ambos
+    if (id) {
+        const antigo = db.get('carradas').find(c => c.id === id);
+        db.update('carradas', id, item);
+        db.recalcularMotorista(mId);
+        if (antigo?.motoristaId && antigo.motoristaId !== mId) db.recalcularMotorista(antigo.motoristaId);
+    } else {
+        db.add('carradas', item);
+        db.recalcularMotorista(mId);
+    }
+
+    fecharFormulario('carrada');
+    db.atualizarTodos();
+    mostrarAba('carradas');
+    toast(id ? 'Carrada atualizada!' : 'Carrada salva!');
+}
+
+function salvarMotorista() {
+    const id   = parseInt(val('motoristaId')) || null;
+    const nome = val('motoristaNome').trim();
+    const tel  = val('motoristaTelefone').trim();
+
+    if (!nome) return toast('Informe o nome!', 'erro');
+    if (!tel)  return toast('Informe o telefone!', 'erro');
+
+    const item = {
+        nome, telefone: tel,
+        admissao:    val('motoristaAdmissao'),
+        status:      val('motoristaStatus'),
+        observacoes: val('motoristaObs').trim()
+    };
+
+    if (id) {
+        const antigo = db.get('motoristas').find(m => m.id === id) || {};
+        // Preserva stats ao editar
+        Object.assign(item, {
+            totalCarradas: antigo.totalCarradas||0, producaoTotal: antigo.producaoTotal||0,
+            totalDiarias:  antigo.totalDiarias||0,
+            totalCombustivelLitros: antigo.totalCombustivelLitros||0, totalCombustivelCusto: antigo.totalCombustivelCusto||0,
+            totalOleoLitros: antigo.totalOleoLitros||0, totalOleoCusto: antigo.totalOleoCusto||0
+        });
+        db.update('motoristas', id, item);
+    } else {
+        Object.assign(item, { totalCarradas:0, producaoTotal:0, totalDiarias:0, totalCombustivelLitros:0, totalCombustivelCusto:0, totalOleoLitros:0, totalOleoCusto:0 });
+        db.add('motoristas', item);
+    }
+
+    fecharFormulario('motorista');
+    db.atualizarTodos();
+    mostrarAba('motoristas');
+    toast(id ? 'Motorista atualizado!' : 'Motorista salvo!');
+}
+
+function salvarCombustivel() {
+    const id   = parseInt(val('combustivelId')) || null;
+    const { id: mId, nome: mNome } = getMotoristaFromSelect('combustivel');
+    const placa = val('combustivelPlaca').toUpperCase();
+    const litros = parseFloat(val('combustivelLitros')) || 0;
+    const valorLitro = parseFloat(val('combustivelValorLitro')) || 0;
+
+    if (!mId)           return toast('Selecione um motorista!', 'erro');
+    if (!placa)         return toast('Informe a placa!', 'erro');
+    if (litros <= 0)    return toast('Informe os litros!', 'erro');
+    if (valorLitro <= 0) return toast('Informe o valor por litro!', 'erro');
+    if (!val('combustivelData')) return toast('Informe a data!', 'erro');
+
+    const item = {
+        motoristaId: mId, motoristaNome: mNome, placa,
+        tipo: val('combustivelTipo'),
+        litros, valorLitro, valorTotal: litros * valorLitro,
+        data: val('combustivelData'),
+        quilometragem: parseInt(val('combustivelKm')) || null,
+        observacoes: val('combustivelObs').trim()
+    };
+
+    if (id) {
+        const antigo = db.get('abastecimentosCombustivel').find(c => c.id === id);
+        db.update('abastecimentosCombustivel', id, item);
+        db.recalcularMotorista(mId);
+        if (antigo?.motoristaId && antigo.motoristaId !== mId) db.recalcularMotorista(antigo.motoristaId);
+    } else {
+        db.add('abastecimentosCombustivel', item);
+        db.recalcularMotorista(mId);
+    }
+
+    fecharFormulario('combustivel');
+    db.atualizarTodos();
+    mostrarAba('combustivel');
+    toast(id ? 'Abastecimento atualizado!' : 'Abastecimento salvo!');
+}
+
+function salvarOleo() {
+    const id   = parseInt(val('oleoId')) || null;
+    const { id: mId, nome: mNome } = getMotoristaFromSelect('oleo');
+    const placa = val('oleoPlaca').toUpperCase();
+    const litros = parseFloat(val('oleoLitros')) || 0;
+    const valorLitro = parseFloat(val('oleoValorLitro')) || 0;
+
+    if (!mId)           return toast('Selecione um motorista!', 'erro');
+    if (!placa)         return toast('Informe a placa!', 'erro');
+    if (litros <= 0)    return toast('Informe os litros!', 'erro');
+    if (valorLitro <= 0) return toast('Informe o valor por litro!', 'erro');
+    if (!val('oleoData')) return toast('Informe a data!', 'erro');
+
+    const item = {
+        motoristaId: mId, motoristaNome: mNome, placa,
+        tipo: val('oleoTipo'),
+        litros, valorLitro, valorTotal: litros * valorLitro,
+        data: val('oleoData'),
+        quilometragem: parseInt(val('oleoKm')) || null,
+        observacoes: val('oleoObs').trim()
+    };
+
+    if (id) {
+        const antigo = db.get('abastecimentosOleo').find(o => o.id === id);
+        db.update('abastecimentosOleo', id, item);
+        db.recalcularMotorista(mId);
+        if (antigo?.motoristaId && antigo.motoristaId !== mId) db.recalcularMotorista(antigo.motoristaId);
+    } else {
+        db.add('abastecimentosOleo', item);
+        db.recalcularMotorista(mId);
+    }
+
+    fecharFormulario('oleo');
+    db.atualizarTodos();
+    mostrarAba('oleo');
+    toast(id ? 'Óleo atualizado!' : 'Óleo salvo!');
+}
+
+function salvarDiaria() {
+    const id   = parseInt(val('diariaId')) || null;
+    const { id: mId, nome: mNome } = getMotoristaFromSelect('diaria');
+    const valor = parseFloat(val('diariaValor')) || 0;
+
+    if (!mId)         return toast('Selecione um motorista!', 'erro');
+    if (!val('diariaData')) return toast('Informe a data!', 'erro');
+    if (valor <= 0)   return toast('Informe o valor!', 'erro');
+
+    const item = {
+        motoristaId: mId, motoristaNome: mNome,
+        data: val('diariaData'), valor,
+        tipo: val('diariaTipo'),
+        observacoes: val('diariaObs').trim()
+    };
+
+    if (id) {
+        const antigo = db.get('diarias').find(d => d.id === id);
+        db.update('diarias', id, item);
+        db.recalcularMotorista(mId);
+        if (antigo?.motoristaId && antigo.motoristaId !== mId) db.recalcularMotorista(antigo.motoristaId);
+    } else {
+        db.add('diarias', item);
+        db.recalcularMotorista(mId);
+    }
+
+    fecharFormulario('diaria');
+    db.atualizarTodos();
+    mostrarAba('diarias');
+    toast(id ? 'Diária atualizada!' : 'Diária salva!');
+}
+
+// ================================================================
+//  VISUALIZAÇÃO
+// ================================================================
+function visualizar(tipo, id) {
+    const COL = { carrada:'carradas', motorista:'motoristas', combustivel:'abastecimentosCombustivel', oleo:'abastecimentosOleo', diaria:'diarias' };
+    const item = db.get(COL[tipo]).find(i => i.id === id);
+    if (!item) return;
+
+    const linhas = {
+        carrada: [
+            ['Motorista', item.motoristaNome],
+            ['Placa', `<span class="placa-badge">${item.placa}</span>`],
+            ['Destino', item.destino],
+            ['Data', formatDate(item.data)],
+            ['Produção', `<strong>${item.producao} un</strong>`],
+            ['Valor por Unidade', item.valor ? `<strong style="color:#e67e22">${moeda(item.valor)}</strong>` : '-'],
+            ['Total da Carrada', item.valor && item.producao ? `<strong style="color:#27ae60;font-size:1.2em">${moeda((item.producao||0)*(item.valor||0))}</strong>` : '-'],
+            ['Status', STATUS_BADGE(item.status)],
+            ['Observações', item.observacoes||'-']
+        ],
+        motorista: [
+            ['Nome', item.nome],
+            ['Telefone', item.telefone],
+            ['Admissão', formatDate(item.admissao)],
+            ['Status', `<span class="status-badge ${item.status==='ativo'?'status-finalizado':item.status==='inativo'?'status-cancelado':'status-planejado'}">${item.status.toUpperCase()}</span>`],
+            ['Carradas', item.totalCarradas||0],
+            ['Produção Total', item.producaoTotal||0],
+            ['Diárias', moeda(item.totalDiarias||0)],
+            ['Combustível', `${(item.totalCombustivelLitros||0).toFixed(1)} L — ${moeda(item.totalCombustivelCusto||0)}`],
+            ['Óleo', `${(item.totalOleoLitros||0).toFixed(1)} L — ${moeda(item.totalOleoCusto||0)}`],
+            ['Observações', item.observacoes||'-']
+        ],
+        combustivel: [
+            ['Motorista', item.motoristaNome],
+            ['Placa', `<span class="placa-badge">${item.placa}</span>`],
+            ['Tipo', TIPO_COMB_MAP[item.tipo]||item.tipo],
+            ['Litros', item.litros.toFixed(1)+' L'],
+            ['Valor/L', moeda(item.valorLitro)],
+            ['Valor Total', moeda(item.valorTotal)],
+            ['Data', formatDate(item.data)],
+            ['Quilometragem', item.quilometragem||'-'],
+            ['Observações', item.observacoes||'-']
+        ],
+        oleo: [
+            ['Motorista', item.motoristaNome],
+            ['Placa', `<span class="placa-badge">${item.placa}</span>`],
+            ['Tipo', TIPO_OLEO_MAP[item.tipo]||item.tipo],
+            ['Litros', item.litros.toFixed(1)+' L'],
+            ['Valor/L', moeda(item.valorLitro)],
+            ['Valor Total', moeda(item.valorTotal)],
+            ['Data', formatDate(item.data)],
+            ['Quilometragem', item.quilometragem||'-'],
+            ['Observações', item.observacoes||'-']
+        ],
+        diaria: [
+            ['Motorista', item.motoristaNome],
+            ['Data', formatDate(item.data)],
+            ['Tipo', { normal:'NORMAL', extra:'EXTRA', viagem:'VIAGEM' }[item.tipo]||item.tipo],
+            ['Valor', moeda(item.valor)],
+            ['Observações', item.observacoes||'-']
+        ]
+    };
+
+    const TITULO = { carrada:'🚛 CARRADA', motorista:'👤 MOTORISTA', combustivel:'⛽ COMBUSTÍVEL', oleo:'🛢️ ÓLEO', diaria:'💰 DIÁRIA' };
+    document.getElementById('visualizarTitulo').textContent = TITULO[tipo];
+    document.getElementById('visualizarConteudo').innerHTML =
+        (linhas[tipo]||[]).map(([k,v]) => `<p><strong>${k}:</strong> ${v}</p>`).join('');
+    document.getElementById('dialogVisualizar').style.display = 'block';
+}
+
+function fecharDialogVisualizar() { document.getElementById('dialogVisualizar').style.display = 'none'; }
+
+// ================================================================
+//  AÇÕES
+// ================================================================
+function aplicarFiltroAno() {
+    db.anoFiltro = document.getElementById('filtroAno').value;
+    db.atualizarTodos();
+}
+
+function alterarStatusCarrada(id) {
+    const item = db.get('carradas').find(c => c.id === id);
+    if (!item) return;
+    const ciclo = { planejado:'em-andamento', 'em-andamento':'finalizado', finalizado:'cancelado', cancelado:'planejado' };
+    db.update('carradas', id, { status: ciclo[item.status] || 'planejado' });
+    db.atualizarTodos();
+}
+
+function excluir(tipo, id) {
+    const COL = { carrada:'carradas', motorista:'motoristas', combustivel:'abastecimentosCombustivel', oleo:'abastecimentosOleo', diaria:'diarias' };
+    const col = COL[tipo];
+    const item = db.get(col).find(i => i.id === id);
+    const motoristaId = item?.motoristaId;
+
+    db.delete(col, id);
+    if (motoristaId && tipo !== 'motorista') db.recalcularMotorista(motoristaId);
+    db.atualizarTodos();
+    toast('Registro excluído.');
+}
+
+function limparTodosDados() {
+    localStorage.clear();
+    db.initData();
+    db.atualizarTodos();
+    fecharDialog();
+    toast('Dados limpos. Dados de exemplo recarregados.');
+}
+
+// ================================================================
+//  DIÁLOGO DE CONFIRMAÇÃO
+// ================================================================
+function pedirConfirmacao(mensagem, callback) {
+    document.getElementById('dialogTitulo').textContent    = 'Confirmar';
+    document.getElementById('dialogMensagem').textContent  = mensagem;
+    document.getElementById('dialogConfirmarBtn').onclick  = () => { fecharDialog(); callback(); };
+    document.getElementById('dialogConfirmar').style.display = 'block';
+}
+function fecharDialog() { document.getElementById('dialogConfirmar').style.display = 'none'; }
+
+// ================================================================
+//  EXPORTAÇÃO EXCEL
+// ================================================================
+function exportarPlanilha() {
+    const wb = XLSX.utils.book_new();
+
+    // === ABA: RESUMO ===
+    const resumo = [{
+        'Ano':                  db.anoFiltro,
+        'Total Carradas':       db.getTotalCarradas(),
+        'Producao Total':       db.getProducaoTotal(),
+        'Valor Carradas (R$)':  db.getTotalValorCarradas().toFixed(2),
+        'Combustivel (L)':      db.getTotalCombustivelLitros().toFixed(1),
+        'Custo Combustivel':    db.getTotalCombustivelCusto().toFixed(2),
+        'Oleo (L)':             db.getTotalOleoLitros().toFixed(1),
+        'Custo Oleo':           db.getTotalOleoCusto().toFixed(2),
+        'Custo Total':          (db.getTotalCombustivelCusto() + db.getTotalOleoCusto()).toFixed(2)
+    }];
+
+    // === ABA: CARRADAS (com valor e total calculado) ===
+    const fmtCarradas = db.getCarradas().map(c => ({
+        Motorista:         c.motoristaNome,
+        Placa:             c.placa,
+        Destino:           c.destino,
+        Data:              formatDate(c.data),
+        Producao:          c.producao,
+        'Valor_Un (R$)':   (c.valor||0).toFixed(2),
+        'Total (R$)':      ((c.producao||0) * (c.valor||0)).toFixed(2),
+        Status:            c.status,
+        Observacoes:       c.observacoes||''
+    }));
+
+    // === ABA: COMBUSTÍVEL ===
+    const fmtComb = db.getCombustivel().map(c => ({
+        Motorista:       c.motoristaNome,
+        Placa:           c.placa,
+        Tipo:            TIPO_COMB_MAP[c.tipo]||c.tipo,
+        'Litros':        c.litros,
+        'Valor/L (R$)':  c.valorLitro.toFixed(2),
+        'Total (R$)':    c.valorTotal.toFixed(2),
+        Data:            formatDate(c.data),
+        Km:              c.quilometragem||''
+    }));
+
+    // === ABA: ÓLEO ===
+    const fmtOleo = db.getOleo().map(o => ({
+        Motorista:       o.motoristaNome,
+        Placa:           o.placa,
+        Tipo:            TIPO_OLEO_MAP[o.tipo]||o.tipo,
+        'Litros':        o.litros,
+        'Valor/L (R$)':  o.valorLitro.toFixed(2),
+        'Total (R$)':    o.valorTotal.toFixed(2),
+        Data:            formatDate(o.data),
+        Km:              o.quilometragem||''
+    }));
+
+    // === ABA: DIÁRIAS ===
+    const fmtDiarias = db.getDiarias().map(d => ({
+        Motorista:    d.motoristaNome,
+        Data:         formatDate(d.data),
+        Tipo:         d.tipo,
+        'Valor (R$)': d.valor.toFixed(2),
+        Observacoes:  d.observacoes||''
+    }));
+
+    // === ABA: PRODUÇÃO — RESUMO POR MOTORISTA ===
+    const fmtProducao = db.getProducaoPorMotorista()
+        .sort((a,b)=>(b.producaoTotal||0)-(a.producaoTotal||0))
+        .map(p => {
+            const custoTotal = (p.totalCombustivelCusto||0) + (p.totalOleoCusto||0) + (p.totalDiarias||0);
+            const resultado  = (p.totalValorCarradas||0) - custoTotal;
+            return {
+                Motorista:                p.nome,
+                'Total Carradas':         p.totalCarradas,
+                'Producao Total':         p.producaoTotal,
+                'Valor Carradas (R$)':    (p.totalValorCarradas||0).toFixed(2),
+                'Diarias (R$)':           (p.totalDiarias||0).toFixed(2),
+                'Combustivel (L)':        (p.totalCombustivelLitros||0).toFixed(1),
+                'Custo Combustivel (R$)': (p.totalCombustivelCusto||0).toFixed(2),
+                'Oleo (L)':               (p.totalOleoLitros||0).toFixed(1),
+                'Custo Oleo (R$)':        (p.totalOleoCusto||0).toFixed(2),
+                'Custo Total (R$)':       custoTotal.toFixed(2),
+                'Resultado Liquido (R$)': resultado.toFixed(2),
+                Performance:              p.producaoTotal>50?'DESTAQUE':p.producaoTotal>20?'BOM':'REGULAR'
+            };
+        });
+
+    // === ABA: PRODUÇÃO — DETALHE CARRADAS ===
+    const fmtProdCarradas = db.getCarradas().map(c => ({
+        Motorista:        c.motoristaNome,
+        Placa:            c.placa,
+        Destino:          c.destino,
+        Data:             formatDate(c.data),
+        Producao:         c.producao,
+        'Valor_Un (R$)':  (c.valor||0).toFixed(2),
+        'Total (R$)':     ((c.producao||0) * (c.valor||0)).toFixed(2),
+        Status:           c.status
+    }));
+
+    // === ABA: PRODUÇÃO — DETALHE COMBUSTÍVEL ===
+    const fmtProdComb = db.getCombustivel().map(c => ({
+        Motorista:       c.motoristaNome,
+        Placa:           c.placa,
+        Tipo:            TIPO_COMB_MAP[c.tipo]||c.tipo,
+        'Litros':        c.litros,
+        'Valor/L (R$)':  c.valorLitro.toFixed(2),
+        'Total (R$)':    c.valorTotal.toFixed(2),
+        Data:            formatDate(c.data),
+        Km:              c.quilometragem||''
+    }));
+
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumo),          'Resumo');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fmtCarradas),     'Carradas');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fmtComb),         'Combustivel');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fmtOleo),         'Oleo');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fmtDiarias),      'Diarias');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fmtProducao),     'Producao-Resumo');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fmtProdCarradas), 'Producao-Carradas');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fmtProdComb),     'Producao-Combustivel');
+
+    XLSX.writeFile(wb, `frota_${db.anoFiltro}_${hoje()}.xlsx`);
+    toast('Planilha exportada com sucesso!');
+}
+
+// ================================================================
+//  INICIALIZAÇÃO
+// ================================================================
+window.onload = () => {
+    db.atualizarDashboard();
+    mostrarAba('dashboard');
+};
 </script>
 </body>
 </html>
