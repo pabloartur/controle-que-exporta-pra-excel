@@ -8,7 +8,7 @@ python3 make_icon.py res
 python3 make_assets.py ../revisa-enem.html assets
 $BT/aapt2 compile --dir res -o build/res.zip
 $BT/aapt2 link -o build/base.apk -I $JAR --manifest AndroidManifest.xml -A assets \
-  --min-sdk-version 21 --target-sdk-version 34 --version-code 3 --version-name 1.2 \
+  --min-sdk-version 21 --target-sdk-version 34 --version-code 4 --version-name 1.3 \
   --java build/gen build/res.zip
 javac -nowarn -Xlint:-options --release 8 -classpath $JAR -d build/classes \
   src/br/revisaenem/app/MainActivity.java build/gen/br/revisaenem/app/R.java

@@ -642,7 +642,8 @@ const MAIS_QS={
 TOPICS.forEach(t=>{ if(MAIS_QS[t.id]) t.qs.push(...MAIS_QS[t.id]); });
 
 /* ---------- Questões no modelo ENEM: texto-base + comando ---------- */
-function E(tb,cmd,o,a,e,fonte){return {q:`<div class="tb">${tb}${fonte?`<span class="fonte">${fonte}</span>`:''}</div><p class="cmd">${cmd}</p>`,o,a,e,m:1}}
+function enemQ(tb,cmd,fonte){return `<div class="tb">${tb}${fonte?`<span class="fonte">${fonte}</span>`:''}</div><p class="cmd">${cmd}</p>`}
+function E(tb,cmd,o,a,e,fonte){return {q:enemQ(tb,cmd,fonte),o,a,e,m:1}}
 const MODELO_QS={
 'mt-porcentagem':[
  E(`<p>Uma loja oferece duas formas de pagamento para uma geladeira cujo preço de tabela é R$ 2.500,00:</p><p>• à vista, com 8% de desconto sobre o preço de tabela;<br>• em 10 parcelas iguais de R$ 260,00, sem entrada.</p><p>Um cliente quer saber quanto pagaria a mais escolhendo o parcelamento em vez do pagamento à vista.</p>`,
@@ -829,6 +830,124 @@ const MODELO_QS={
 };
 TOPICS.forEach(t=>{ if(MODELO_QS[t.id]) t.qs.push(...MODELO_QS[t.id]); });
 
+/* ---------- Todas as questões no modelo ENEM ----------
+   Texto-base e comando para as questões 1 a 6 de cada assunto.
+   As alternativas, o gabarito e a resolução continuam os mesmos. */
+const ENEM_FMT={
+'mt-porcentagem-1':[`<p>Em uma liquidação, uma loja de calçados colocou na vitrine o seguinte cartaz:</p><p><b>TÊNIS DE CORRIDA: R$ 240,00<br>À vista: 25% de desconto</b></p><p>Um cliente decidiu comprar o tênis e pagar à vista.</p>`,`O valor pago por esse cliente foi de`],
+'mt-porcentagem-2':[`<p>Uma reportagem acompanhou o preço do quilo do tomate em um mercado. Em janeiro, o preço subiu 20% por causa das chuvas. Em fevereiro, com a colheita normalizada, o preço caiu 20%.</p><p>Um leitor comentou: "Subiu 20% e caiu 20%, então voltou ao preço de antes".</p>`,`Em relação ao preço do início de janeiro, o preço no fim de fevereiro está`],
+'mt-porcentagem-3':[`<p>Para juntar dinheiro para a formatura, uma estudante aplicou R$ 2.000,00 em um investimento que rende juros compostos de 5% ao mês. Ela não pretende fazer novos depósitos nem saques.</p>`,`Depois de 2 meses, o montante dessa aplicação será de`],
+'mt-porcentagem-4':[`<p>A coordenação de uma escola fez um levantamento do perfil das turmas. Na turma do 3º ano A, há 40 estudantes, dos quais 15 são meninos.</p>`,`A porcentagem de meninas nessa turma é de`],
+'mt-porcentagem-5':[`<p>Um consumidor acompanha o preço de um celular em uma loja virtual. No mês passado, o aparelho custava R$ 1.200,00. Neste mês, o mesmo modelo está sendo vendido por R$ 1.380,00.</p>`,`O aumento percentual no preço do celular foi de`],
+'mt-porcentagem-6':[`<p>Um pequeno empreendedor emprestou R$ 5.000,00 a um parente, combinando juros simples de 2% ao mês. O valor será devolvido em uma única parcela, ao fim de 6 meses.</p>`,`O valor dos juros que o empreendedor vai receber é de`],
+'mt-proporcao-1':[`<p>Um estudante planeja uma viagem de bicicleta entre duas cidades vizinhas. Em um mapa rodoviário na escala 1 : 200.000, ele mediu 7 cm em linha reta entre as duas cidades.</p>`,`A distância real, em linha reta, entre as duas cidades é de`],
+'mt-proporcao-2':[`<p>Uma receita de bolo traz a informação: "Rendimento: 8 porções. Ingredientes: 3 xícaras de farinha de trigo, 2 xícaras de leite e 3 ovos". Uma pessoa vai fazer o bolo para uma festa com 20 convidados e quer manter a proporção da receita.</p>`,`A quantidade de xícaras de farinha que ela deve usar é`],
+'mt-proporcao-3':[`<p>Uma construtora contratou 6 pedreiros para erguer o muro de um condomínio, e o serviço foi estimado em 10 dias. Para entregar a obra antes do prazo, a empresa decidiu colocar 15 pedreiros trabalhando no mesmo ritmo.</p>`,`Com essa mudança, o número de dias necessários para concluir o muro é`],
+'mt-proporcao-4':[`<p>Antes de uma viagem, um motorista anotou que seu carro percorreu 240 km com 20 litros de gasolina. O trajeto até a cidade de destino tem 420 km, e ele pretende manter o mesmo consumo.</p>`,`A quantidade de gasolina, em litros, necessária para essa viagem é`],
+'mt-proporcao-5':[`<p>Um arquiteto entregou a uma família a planta de uma casa desenhada na escala 1 : 50. Na planta, a sala aparece com 8 cm de comprimento.</p>`,`O comprimento real da sala é de`],
+'mt-proporcao-6':[`<p>Dois irmãos, de 10 e 20 anos, ganharam juntos um prêmio de R$ 900,00 em um concurso de redação. A família decidiu dividir o valor em partes diretamente proporcionais às idades deles.</p>`,`O valor recebido pelo irmão mais velho foi de`],
+'mt-estatistica-1':[`<p>O quadro mostra os gols marcados por um time nos sete jogos de um campeonato de bairro.</p><div class="tbwrap"><table><tr><th>Jogo</th><td>1º</td><td>2º</td><td>3º</td><td>4º</td><td>5º</td><td>6º</td><td>7º</td></tr><tr><th>Gols</th><td>2</td><td>0</td><td>3</td><td>1</td><td>2</td><td>4</td><td>2</td></tr></table></div>`,`A mediana e a moda do número de gols marcados são, respectivamente,`],
+'mt-estatistica-2':[`<p>O edital de um processo seletivo informa que a nota final será a média ponderada de três provas: Matemática (peso 2), Português (peso 2) e Redação (peso 1). Um candidato obteve 6 em Matemática, 8 em Português e 10 na Redação.</p>`,`A nota final desse candidato foi`],
+'mt-estatistica-3':[`<p>Uma pequena empresa tem cinco funcionários, incluindo o dono. Os salários mensais são: R$ 1.500, R$ 1.500, R$ 1.800, R$ 2.000 e R$ 13.200 (o do dono). Em uma entrevista, o dono afirmou que o salário médio da empresa é alto.</p>`,`A média e a mediana desses salários são, respectivamente,`],
+'mt-estatistica-4':[`<p>Em uma escola, o aluno é aprovado se a média aritmética das quatro provas do ano for, no mínimo, 7. Um estudante tirou 5, 7 e 8 nas três primeiras provas e ainda vai fazer a última.</p>`,`A nota mínima que ele precisa tirar na última prova para ser aprovado é`],
+'mt-estatistica-5':[`<p>Uma pesquisa perguntou a 10 famílias de uma rua quantos filhos cada uma tem. O resultado está no quadro.</p><div class="tbwrap"><table><tr><th>Número de filhos</th><td>0</td><td>1</td><td>2</td></tr><tr><th>Número de famílias</th><td>3</td><td>5</td><td>2</td></tr></table></div>`,`A média de filhos por família nessa rua é`],
+'mt-estatistica-6':[`<p>Em uma corrida escolar, seis estudantes registraram os seguintes tempos, em minutos: 12, 15, 11, 18, 14 e 16. O professor de Educação Física usou a mediana desses tempos como referência para o próximo treino.</p>`,`O tempo de referência escolhido pelo professor, em minutos, foi`],
+'mt-volumes-1':[`<p>Uma família vai instalar uma caixa-d'água em forma de paralelepípedo. As medidas internas do reservatório são 2 m de comprimento, 1,5 m de largura e 1 m de altura.</p>`,`A capacidade dessa caixa-d'água, em litros, é de`],
+'mt-volumes-2':[`<p>Uma fábrica vai lançar uma lata cilíndrica de molho de tomate, com raio da base de 4 cm e altura de 10 cm. Nos cálculos, a empresa usa π = 3.</p>`,`O volume dessa lata é de`],
+'mt-volumes-3':[`<p>Em uma aula de Matemática, a professora mostrou dois copos com bases iguais e a mesma altura: um em forma de cone e outro em forma de cilindro. Ela desafiou a turma a descobrir quantos copos cônicos cheios de água seriam necessários para encher completamente o copo cilíndrico.</p>`,`A resposta correta para o desafio da professora é`],
+'mt-volumes-4':[`<p>Um clube vai encher uma piscina retangular com 8 m de comprimento, 4 m de largura e 1,5 m de profundidade.</p>`,`A quantidade de água necessária para encher a piscina, em litros, é de`],
+'mt-volumes-5':[`<p>Uma loja vende caixas de presente em forma de cubo. A caixa pequena tem aresta de 3 cm. A caixa grande tem o dobro da aresta da pequena.</p>`,`O volume da caixa grande é de`],
+'mt-volumes-6':[`<p>Uma sorveteria serve sorvete em casquinhas em forma de cone, com raio da base de 3 cm e altura de 10 cm. Para calcular quanto sorvete cabe dentro da casquinha, o dono usa π = 3.</p>`,`O volume interno da casquinha é de`],
+'cn-ecologia-1':[`<p>Em uma região de garimpo ilegal, o mercúrio usado para separar o ouro é despejado em um rio. Nesse rio existe a seguinte cadeia alimentar:</p><p>fitoplâncton → zooplâncton → peixe pequeno → peixe grande → garça</p>`,`O organismo em que se espera encontrar a maior concentração de mercúrio é o seguinte:`],
+'cn-ecologia-2':[`<p>Moradores de um bairro denunciaram que uma lagoa da região passou a receber esgoto doméstico sem tratamento. Meses depois, a água ficou esverdeada e houve grande mortandade de peixes.</p>`,`A causa direta mais provável da morte dos peixes é`],
+'cn-ecologia-3':[`<p>Ao estudar diferentes ecossistemas, ecólogos observaram que as cadeias alimentares raramente têm mais de quatro ou cinco níveis, mesmo em ambientes com grande diversidade de espécies.</p>`,`Essa limitação acontece porque`],
+'cn-ecologia-4':[`<p>Em um campo, foi observada a seguinte cadeia alimentar: o capim é comido por gafanhotos, que são comidos por sapos, que são comidos por cobras.</p>`,`Nessa cadeia, o sapo é um`],
+'cn-ecologia-5':[`<p>Relatórios científicos sobre o clima apontam que a queima de combustíveis fósseis, como gasolina e carvão, e o desmatamento de florestas estão entre as atividades humanas que mais alteram a composição da atmosfera.</p>`,`Essas atividades contribuem principalmente para`],
+'cn-ecologia-6':[`<p>Em uma floresta, folhas, galhos e animais mortos não se acumulam indefinidamente no solo. Com o tempo, esse material desaparece, e o solo continua fértil para o crescimento de novas plantas.</p>`,`Esse processo é possível porque os fungos e as bactérias decompositores`],
+'cn-genetica-1':[`<p>O albinismo é uma condição genética recessiva, caracterizada pela ausência de melanina na pele, nos olhos e nos cabelos. Um casal com pigmentação normal descobriu, por meio de exames, que os dois são heterozigotos (Aa) para essa característica.</p>`,`A probabilidade de esse casal ter um filho albino é de`],
+'cn-genetica-2':[`<p>Um casal com pigmentação normal, em que os dois são heterozigotos (Aa) para o albinismo, condição recessiva, procurou um serviço de aconselhamento genético antes de ter o primeiro filho.</p>`,`A probabilidade de esse casal ter uma menina albina é de`],
+'cn-genetica-3':[`<p>Em ervilhas, a cor amarela das sementes (V) é dominante sobre a cor verde (v). Em um experimento, um estudante cruzou uma planta heterozigota (Vv) com uma planta de sementes verdes (vv).</p>`,`Espera-se que os descendentes desse cruzamento sejam`],
+'cn-genetica-4':[`<p>Em porquinhos-da-índia, a pelagem preta (B) é dominante sobre a branca (b). Um criador cruzou um macho preto heterozigoto (Bb) com uma fêmea branca (bb).</p>`,`A chance de nascer um filhote branco é de`],
+'cn-genetica-5':[`<p>Um criador tem um casal de porquinhos-da-índia de pelagem preta. Em uma das ninhadas, nasceu um filhote branco. Sabe-se que a pelagem preta (B) é dominante sobre a branca (b).</p>`,`Com base nessa informação, os pais do filhote são`],
+'cn-genetica-6':[`<p>Um homem albino (aa) e uma mulher de pigmentação normal, homozigota (AA), planejam ter filhos e querem saber como será a pigmentação das crianças. O albinismo é uma condição recessiva.</p>`,`Os filhos desse casal serão`],
+'cn-eletricidade-1':[`<p>Uma família quer reduzir a conta de luz e começou a analisar o uso do chuveiro elétrico. O aparelho tem potência de 4.400 W e fica ligado, em média, 20 minutos por dia.</p>`,`O consumo de energia do chuveiro em 30 dias é de`],
+'cn-eletricidade-2':[`<p>Na conta de luz de uma residência, a tarifa é de R$ 0,80 por kWh. Um morador quer saber quanto gasta com a televisão de 100 W, que fica ligada 5 horas por dia.</p>`,`Em 30 dias, o uso dessa televisão acrescenta à conta de luz o valor de`],
+'cn-eletricidade-3':[`<p>O manual de um chuveiro elétrico explica: "Na posição inverno, a água sai mais quente. Na posição verão, o consumo de energia é menor". A tensão da rede elétrica é a mesma nas duas posições.</p>`,`Ao mudar a chave da posição verão para a posição inverno,`],
+'cn-eletricidade-4':[`<p>Uma escola trocou uma lâmpada incandescente de 60 W por uma lâmpada de LED de 10 W, que ilumina o ambiente da mesma forma. A lâmpada fica acesa 5 horas por dia.</p>`,`A economia de energia obtida com a troca, em 30 dias, é de`],
+'cn-eletricidade-5':[`<p>Um eletricista mediu a corrente elétrica em uma secadora de roupas ligada a uma tomada de 220 V e encontrou o valor de 10 A.</p>`,`A potência elétrica dessa secadora é de`],
+'cn-eletricidade-6':[`<p>Em uma aula de laboratório de Física, os estudantes ligaram um resistor de 20 Ω a uma fonte de tensão de 120 V.</p>`,`A corrente elétrica que passa pelo resistor é de`],
+'cn-quimica-1':[`<p>Para preparar uma calda, uma confeiteira dissolveu 30 g de açúcar em água, completando o volume até 500 mL de solução.</p>`,`A concentração de açúcar nessa calda é de`],
+'cn-quimica-2':[`<p>Um suco concentrado de caju traz no rótulo a orientação "dilua antes de beber". Uma pessoa colocou 200 mL desse suco, que tem 80 g/L de açúcar, em uma jarra e completou com água até 1 L.</p>`,`A concentração de açúcar no suco pronto para beber é de`],
+'cn-quimica-3':[`<p>O gás natural, formado principalmente por metano, é usado em fogões e em veículos. A combustão completa do metano é representada por:</p><p>CH₄ + 2 O₂ → CO₂ + 2 H₂O</p><p>Massas molares: CH₄ = 16 g/mol; CO₂ = 44 g/mol.</p>`,`Na queima completa de 32 g de metano, a massa de CO₂ produzida é de`],
+'cn-quimica-4':[`<p>Em um laboratório escolar, o professor pediu que os alunos preparassem 250 mL de uma solução de sal de cozinha com concentração de 40 g/L.</p>`,`A massa de sal que deve ser pesada é de`],
+'cn-quimica-5':[`<p>O gás carbônico (CO₂) é um dos principais gases do efeito estufa. Para calcular quantidades desse gás em reações químicas, é preciso conhecer sua massa molar. Dados: C = 12 g/mol; O = 16 g/mol.</p>`,`A massa molar do gás carbônico é de`],
+'cn-quimica-6':[`<p>As células a combustível usadas em alguns veículos produzem energia a partir da reação entre hidrogênio e oxigênio, que forma apenas água:</p><p>2 H₂ + O₂ → 2 H₂O</p>`,`Havendo hidrogênio suficiente, a quantidade de água formada a partir de 3 mol de O₂ é de`],
+'ch-escravidao-1':[`<p>Em 1850, sob forte pressão da Inglaterra, o governo imperial brasileiro aprovou a Lei Eusébio de Queirós. Nos anos seguintes, o preço dos escravizados subiu, e cresceu o tráfico interno, das províncias do Norte para as fazendas de café do Sudeste.</p>`,`A Lei Eusébio de Queirós foi importante no processo de abolição porque`],
+'ch-escravidao-2':[`<p>Na Serra da Barriga, no atual estado de Alagoas, existiu durante o século XVII o Quilombo dos Palmares, que chegou a reunir milhares de pessoas. Hoje, o local abriga um parque memorial dedicado à história da resistência negra.</p>`,`Quilombos como o de Palmares representaram`],
+'ch-escravidao-3':[`<p>Muitos historiadores afirmam que a abolição da escravidão no Brasil, em 1888, foi "incompleta". Esse argumento aparece com frequência em debates atuais sobre desigualdade racial e políticas de reparação.</p>`,`Esse argumento se baseia no fato de que`],
+'ch-escravidao-4':[`<p>Aprovada em 1871, a Lei Rio Branco, conhecida como Lei do Ventre Livre, foi apresentada pelo governo como um passo rumo ao fim da escravidão. Os abolicionistas, porém, criticaram seus efeitos limitados.</p>`,`A Lei do Ventre Livre determinava que`],
+'ch-escravidao-5':[`<p>Em janeiro de 1835, centenas de africanos se levantaram nas ruas de Salvador. Muitos deles sabiam ler e escrever em árabe e usavam amuletos com trechos do Alcorão. A revolta foi duramente reprimida.</p>`,`A Revolta dos Malês, descrita no texto, foi organizada principalmente por`],
+'ch-escravidao-6':[`<p>Nos séculos XVI e XVII, os engenhos do Nordeste produziram boa parte do açúcar consumido na Europa. As propriedades eram enormes, cultivavam quase só cana-de-açúcar e dependiam do trabalho de africanos escravizados.</p>`,`O modelo de produção descrito, chamado plantation, tinha como características`],
+'ch-republica-1':[`<p>Em 13 de dezembro de 1968, o governo do general Costa e Silva decretou o Ato Institucional nº 5. No mesmo dia, o Congresso Nacional foi colocado em recesso, e a censura aos meios de comunicação foi intensificada.</p>`,`O AI-5 é considerado o ato mais duro do regime militar porque`],
+'ch-republica-2':[`<p>Em 1º de maio de 1943, em um estádio lotado no Rio de Janeiro, Getúlio Vargas anunciou a Consolidação das Leis do Trabalho. As comemorações do Dia do Trabalho eram usadas pelo governo para reforçar a imagem do presidente.</p>`,`Uma das marcas do governo de Getúlio Vargas, citada no texto, foi`],
+'ch-republica-3':[`<p>Entre 1968 e 1973, o PIB brasileiro cresceu, em média, mais de 10% ao ano. O governo divulgava slogans otimistas, mas os salários dos trabalhadores mais pobres perderam poder de compra, e a dívida externa aumentou.</p>`,`Sobre o período conhecido como "milagre econômico", é correto afirmar que`],
+'ch-republica-4':[`<p>Em 1930, o candidato paulista Júlio Prestes venceu a eleição presidencial, mas não chegou a tomar posse. Um movimento armado liderado por Getúlio Vargas, com apoio de Minas Gerais, Rio Grande do Sul e Paraíba, depôs o presidente Washington Luís.</p>`,`O movimento descrito, conhecido como Revolução de 1930, pôs fim`],
+'ch-republica-5':[`<p>Em 1984, multidões ocuparam praças de cidades como São Paulo e Rio de Janeiro. Artistas, políticos e estudantes vestiam amarelo e cantavam pelas ruas. Em abril daquele ano, a emenda Dante de Oliveira foi votada no Congresso.</p>`,`O movimento Diretas Já, descrito no texto, reivindicava`],
+'ch-republica-6':[`<p>Entre 1937 e 1945, jornais e rádios brasileiros eram controlados por um órgão do governo, o DIP. Ao mesmo tempo, o programa de rádio "Hora do Brasil" divulgava diariamente as realizações do presidente.</p>`,`Durante o Estado Novo, o governo Vargas`],
+'ch-geografia-1':[`<p>Todo verão, em grandes cidades brasileiras, chuvas fortes provocam alagamentos em avenidas construídas sobre antigos rios e córregos canalizados. Os bairros mais atingidos costumam ter pouca área verde e muito asfalto.</p>`,`Nas situações descritas, as enchentes são agravadas principalmente por`],
+'ch-geografia-2':[`<p>Medições feitas em uma metrópole mostraram que, em uma noite de verão, a temperatura no centro, onde predominam prédios e asfalto, era cerca de 5 °C maior que em um bairro arborizado da periferia.</p>`,`O fenômeno da ilha de calor, evidenciado pelas medições, está relacionado`],
+'ch-geografia-3':[`<p>Pescadores de uma região notaram que o rio onde trabalham está cada vez mais raso e com a água mais barrenta. Nos últimos anos, as árvores das margens foram derrubadas para abrir pastos.</p>`,`A retirada da vegetação das margens do rio tende a provocar`],
+'ch-geografia-4':[`<p>Em 1950, a maior parte dos brasileiros vivia no campo. Em poucas décadas, milhões de pessoas se mudaram para as cidades, principalmente para o Sudeste, em busca de trabalho.</p>`,`Esse êxodo rural foi causado principalmente`],
+'ch-geografia-5':[`<p>Em manhãs frias de inverno, moradores de São Paulo costumam ver uma camada acinzentada sobre a cidade. Nesses dias, aumentam os atendimentos por problemas respiratórios nos postos de saúde.</p>`,`A inversão térmica, comum nessas manhãs, agrava os problemas respiratórios porque`],
+'ch-geografia-6':[`<p>Em muitas cidades brasileiras, condomínios de alto padrão, com segurança privada e áreas de lazer, ficam a poucos quilômetros de comunidades sem saneamento básico e com transporte precário.</p>`,`A situação descrita é um exemplo de segregação socioespacial, que se manifesta, por exemplo,`],
+'ch-filosofia-1':[`<p>"Sem um poder comum capaz de manter todos em respeito, os homens vivem numa condição de guerra de todos contra todos."</p>`,`Essa ideia é central no pensamento de`,`Filósofo inglês do século XVII. Tradução livre.`],
+'ch-filosofia-2':[`<p>"São Poderes da União, independentes e harmônicos entre si, o Legislativo, o Executivo e o Judiciário."</p>`,`A organização do Estado prevista nesse artigo tem origem nas ideias de`,`BRASIL. Constituição Federal de 1988, artigo 2º.`],
+'ch-filosofia-3':[`<p>Ninguém escolheu sozinho a língua que fala, a obrigação de ir à escola ou as regras de comportamento à mesa. Esses costumes já existiam antes de nós, valem para quase todos e, quando não os seguimos, sofremos algum tipo de sanção.</p>`,`Para Émile Durkheim, comportamentos como esses são fatos sociais, isto é, maneiras de agir, pensar e sentir que`],
+'ch-filosofia-4':[`<p>"Sempre que os legisladores tentam tirar e destruir a propriedade do povo, colocam-se em estado de guerra com ele, que fica então dispensado de qualquer obediência."</p>`,`Para o autor do texto, o governo existe para`,`LOCKE, J. Segundo tratado sobre o governo civil (1689). Tradução livre e adaptada.`],
+'ch-filosofia-5':[`<p>Em uma fábrica, um operário produz, em uma jornada de 8 horas, mercadorias que valem muito mais do que o salário que recebe pelo dia de trabalho. A diferença fica com o dono da fábrica.</p>`,`Essa situação ilustra o conceito de mais-valia, de Karl Marx, que se refere`],
+'ch-filosofia-6':[`<p>Em um órgão público, o servidor não pode atender um amigo antes dos outros cidadãos: precisa seguir a ordem das senhas e as regras do regulamento, que valem para todos.</p>`,`Para Max Weber, a forma de dominação baseada em regras impessoais, como a descrita no texto, é a dominação`],
+'lc-funcoes-1':[`<p>Não perca tempo! Garanta já o seu e aproveite o desconto exclusivo para você.</p>`,`Nesse anúncio, a função da linguagem que predomina é a`,`Anúncio de uma loja de eletrônicos.`],
+'lc-funcoes-2':[`<p>Este poema fala de si:<br>cada verso que aqui ponho<br>explica como se faz<br>um verso, enquanto o componho.</p>`,`Nesse poema, predomina a função`],
+'lc-funcoes-3':[`<p>— Alô? Alô? Está me ouvindo?<br>— Oi! Estou sim, pode falar.</p>`,`Nesse diálogo, predomina a função`],
+'lc-funcoes-4':[`<p><b>casa</b> (subst. fem.): construção destinada à moradia.</p>`,`Nesse texto, predomina a função`,`Verbete de dicionário.`],
+'lc-funcoes-5':[`<p>A Defesa Civil registrou 120 milímetros de chuva em 24 horas na capital. Três bairros tiveram alagamentos, e não houve feridos.</p>`,`Nesse trecho, predomina a função`,`Trecho de notícia.`],
+'lc-funcoes-6':[`<p>Que saudade eu sinto daquelas tardes! Ainda hoje me emociono quando lembro da casa da minha avó.</p>`,`Nesse trecho, predomina a função`],
+'lc-variacao-1':[`<p>Na feira de Recife, o feirante anuncia: "Olha a macaxeira fresquinha!". No Rio de Janeiro, a mesma raiz é vendida como aipim. Em São Paulo, a placa do mercado diz: mandioca.</p>`,`As diferentes palavras usadas para nomear a mesma raiz são um exemplo de variação`],
+'lc-variacao-2':[`<p>Em textos antigos, era comum o tratamento "vossa mercê", usado para se dirigir a alguém com respeito. Com o tempo, a expressão se transformou em "vosmecê" e, depois, em "você". Hoje, na fala informal, muita gente diz apenas "cê".</p>`,`O processo descrito é um exemplo de variação`],
+'lc-variacao-3':[`<p>Em uma reportagem sobre a colheita do café, um agricultor disse ao repórter: "Nós vai começar a colheita na semana que vem". Nas redes sociais, alguns internautas riram da forma como ele falou.</p>`,`Do ponto de vista dos estudos da linguagem, é correto afirmar que`],
+'lc-variacao-4':[`<p>Com os amigos, um jovem comenta: "Mano, o rolê de ontem foi muito top!". Horas depois, em uma entrevista de emprego, ao falar do mesmo evento, ele diz: "O evento de ontem foi muito bom".</p>`,`A mudança no jeito de falar do jovem é um exemplo de variação`],
+'lc-variacao-5':[`<p>Em uma audiência, a advogada explica ao cliente: "Como a sentença já transitou em julgado, não cabe mais recurso. Mas ainda podemos entrar com um pedido de habeas corpus".</p>`,`Expressões como "transitou em julgado" e "habeas corpus" são exemplos de`],
+'lc-variacao-6':[`<p>Segundo os critérios de correção do ENEM, a Competência 1 avalia se o participante demonstra domínio da modalidade escrita formal da língua portuguesa.</p>`,`Com base nesse critério, na redação do ENEM o candidato deve usar`],
+'lc-generos-1':[`<p>Muitos jornais e revistas publicam textos curtos que partem de um acontecimento do dia a dia, como uma conversa no ônibus ou uma cena na padaria, e o transformam em reflexão, com linguagem leve e o olhar pessoal do autor. Rubem Braga e Fernando Sabino ficaram famosos escrevendo esse tipo de texto.</p>`,`O gênero textual descrito é`],
+'lc-generos-2':[`<p>Na véspera de uma eleição, um jornal publicou um desenho de um candidato com o nariz enorme, prometendo "asfalto até na Lua". Na legenda, lia-se: "Promessa é dívida... do eleitor".</p>`,`Esse texto é uma charge, gênero que se caracteriza por`],
+'lc-generos-3':[`<p>O celular aproximou quem estava longe. Mas, às vezes, basta olhar para uma mesa de restaurante, onde cada um encara a própria tela em silêncio, para perceber que ele também afastou quem estava perto.</p>`,`O texto sugere que`],
+'lc-generos-4':[`<p>Bolo de caneca: misture em uma caneca 4 colheres de farinha, 3 de açúcar e 2 de chocolate em pó. Acrescente 1 ovo e 3 colheres de leite. Leve ao micro-ondas por 3 minutos.</p>`,`Pela forma como está organizado, com verbos como "misture" e "acrescente", esse texto pertence ao tipo textual`],
+'lc-generos-5':[`<p>Um jornal publicou, na mesma edição, dois textos sobre o aumento da tarifa de ônibus. O primeiro informava o novo valor e a data de início. O segundo, sem assinatura, afirmava: "Este jornal considera o reajuste abusivo e injustificável".</p>`,`O segundo texto é um editorial, que se diferencia da notícia porque`],
+'lc-generos-6':[`<p>Ler não é apenas decifrar palavras. É dialogar com o texto, questioná-lo, relacioná-lo com o que já se sabe e com o mundo em que se vive.</p>`,`De acordo com o trecho, ler é`],
+'lc-figuras-1':[`<p>Mensagem de uma mãe para o filho: "Já te liguei mil vezes hoje! Responde, por favor!".</p>`,`Na mensagem, a expressão "mil vezes" é um exemplo de`],
+'lc-figuras-2':[`<p>Nas férias, uma estudante postou: "Vou ler Machado de Assis inteirinho antes do vestibular!".</p>`,`Na frase, a expressão "ler Machado de Assis" é um exemplo de`],
+'lc-figuras-3':[`<p>Depois de esperar duas horas na fila de um banco, um cliente comentou com a pessoa ao lado: "Que atendimento rápido!".</p>`,`A figura de linguagem presente na fala do cliente é a`],
+'lc-figuras-4':[`<p>"O sol beijava as flores do jardim, e o vento cantava baixinho entre as folhas."</p>`,`No trecho, há`],
+'lc-figuras-5':[`<p>Ao contar sobre a morte de um vizinho idoso, uma senhora disse: "O seu Antônio foi desta para melhor".</p>`,`A expressão usada pela senhora é um exemplo de`],
+'lc-figuras-6':[`<p>Nasce o Sol, e não dura mais que um dia,<br>Depois da Luz se segue a noite escura.</p>`,`A figura de linguagem que se destaca nesses versos é a`,`MATOS, G. Fragmento de soneto (século XVII).`],
+'red-estrutura-1':[`<p>Na redação do ENEM, cada texto é corrigido de acordo com cinco competências. A nota final, que pode chegar a 1.000 pontos, é a soma das notas dessas competências.</p>`,`A nota máxima de cada uma das cinco competências é de`],
+'red-estrutura-2':[`<p>Trecho de redação: "O acesso à internet ampliou as oportunidades de estudo. <b>Entretanto</b>, milhões de jovens ainda não têm conexão em casa. <b>Portanto</b>, a desigualdade digital também é educacional."</p>`,`O uso dos conectivos destacados é avaliado principalmente na`],
+'red-estrutura-3':[`<p>O tema da redação de um ano foi a valorização de comunidades e povos tradicionais. Um participante decidiu escrever sobre o futebol brasileiro nas Copas do Mundo, sem nenhuma relação com a proposta.</p>`,`Uma redação como essa recebe nota zero porque`],
+'red-estrutura-4':[`<p>Um professor de redação orienta: "No primeiro parágrafo, apresente o tema e deixe claro qual é o seu ponto de vista. Nos parágrafos seguintes, defenda esse ponto de vista com argumentos".</p>`,`De acordo com essa orientação, a tese deve aparecer de preferência`],
+'red-estrutura-5':[`<p>Uma das competências da redação do ENEM avalia se o candidato compreendeu a proposta e aplicou conceitos de várias áreas de conhecimento para desenvolver o tema, dentro dos limites do texto dissertativo-argumentativo.</p>`,`A competência descrita é a Competência 2, que avalia, entre outros aspectos,`],
+'red-estrutura-6':[`<p><b>Tema:</b> Desigualdade no acesso à educação no Brasil.</p><p>Uma estudante está planejando o primeiro parágrafo de desenvolvimento e quer usar um repertório sociocultural que fortaleça o seu argumento.</p>`,`A opção que mostra um repertório bem usado para esse tema é:`],
+'red-intervencao-1':[`<p>Proposta de intervenção de um candidato: "O Governo Federal deve criar campanhas contra o desperdício de alimentos, por meio das redes sociais".</p>`,`Para ficar completa, segundo os critérios do ENEM, essa proposta ainda precisa de`],
+'red-intervencao-2':[`<p>Trecho da conclusão de uma redação: "As prefeituras devem oferecer transporte escolar gratuito, a fim de reduzir a evasão escolar nas zonas rurais".</p>`,`A parte "a fim de reduzir a evasão escolar nas zonas rurais" corresponde a qual elemento da proposta de intervenção?`],
+'red-intervencao-3':[`<p>Os critérios de correção do ENEM orientam que a proposta de intervenção respeite os direitos humanos. Propostas que defendam, por exemplo, tortura, violência ou "justiça com as próprias mãos" são penalizadas.</p>`,`Considerando essa orientação, a proposta que desrespeita os direitos humanos é:`],
+'red-intervencao-4':[`<p>Trecho da conclusão de uma redação: "O Ministério da Saúde deve promover campanhas de vacinação nas escolas, por meio de equipes de saúde da família, a fim de ampliar a cobertura vacinal entre crianças e adolescentes".</p>`,`No trecho, a expressão "O Ministério da Saúde" corresponde a qual elemento da proposta?`],
+'red-intervencao-5':[`<p><b>Tema:</b> Os desafios para combater o cyberbullying entre adolescentes.</p><p>Cinco estudantes escreveram as propostas de intervenção apresentadas nas alternativas.</p>`,`A proposta de intervenção mais completa é:`],
+'red-intervencao-6':[`<p>Trecho de proposta: "O Ministério da Educação deve ampliar o acesso à internet nas escolas públicas, <b>por meio de</b> parcerias com empresas de telecomunicações, para reduzir a desigualdade digital".</p>`,`Na proposta de intervenção, a expressão destacada introduz o`]
+};
+TOPICS.forEach(t=>t.qs.forEach((q,i)=>{
+  const f=ENEM_FMT[t.id+'-'+(i+1)];
+  if(f&&!q.pid){ q.q=enemQ(f[0],f[1],f[2]); q.m=1; }
+}));
+
 /* ---------- Repertório curinga para a redação ---------- */
 const TEMAS=['Educação','Tecnologia','Desigualdade','Saúde','Saúde mental','Meio ambiente','Violência','Mulheres','Racismo','Cidadania','Trabalho','Juventude','Idosos'];
 const REPERTORIOS=[
@@ -946,7 +1065,7 @@ const GENS=[
   const P=r.pick([120,160,180,240,300,360,450,480,600,750,900,1200]), d=r.pick([10,15,20,25,30,40]);
   const item=r.pick(['um tênis','uma mochila','um fone de ouvido','uma bicicleta','um ventilador','uma cadeira de escritório']);
   const pay=r2(P*(100-d)/100);
-  return {q:`Uma loja anuncia ${item} por ${brl(P)}, com ${d}% de desconto para pagamento à vista. Quanto paga quem compra à vista?`,
+  return {tb:`<p>Em uma promoção, uma loja anuncia ${item} por ${brl(P)}. Para pagamento à vista, o cliente ganha ${d}% de desconto sobre esse valor.</p>`, cmd:`O valor pago por quem compra à vista é de`,
    c:brl(pay), d:[brl(r2(P*d/100)),brl(P-d),brl(r2(P*(100+d)/100)),brl(r2(P*(95-d)/100))],
    e:`Desconto de ${d}% significa pagar ${100-d}% do preço: ${fmt(P)} × ${fmt((100-d)/100)} = ${brl(pay)}. O valor ${brl(r2(P*d/100))} é só o desconto.`,
    x:k=>brl(r2(pay+k*5))};
@@ -955,7 +1074,7 @@ const GENS=[
   const a=r.pick([10,20,25,30,40,50]), b=r.pick([10,20,25,30,40,50]);
   const f=(100+a)*(100-b)/10000, ch=r2((f-1)*100);
   const lab=v=>v>0?`${fmt(v)}% maior`:v<0?`${fmt(-v)}% menor`:'igual ao inicial';
-  return {q:`O preço de um produto subiu ${a}% em um mês e, no mês seguinte, caiu ${b}%. Em relação ao preço inicial, o preço final ficou`,
+  return {tb:`<p>Uma pesquisa acompanhou o preço de um produto em um mercado. Em um mês, o preço subiu ${a}%. No mês seguinte, caiu ${b}% em relação ao novo valor.</p>`, cmd:`Em relação ao preço inicial, o preço final ficou`,
    c:lab(ch), d:[lab(a-b),lab(-ch),lab(r2(ch-5)),lab(a),lab(-b)],
    e:`Multiplique os fatores: ${fmt((100+a)/100)} × ${fmt((100-b)/100)} = ${fmt(f,4)}. O preço final é ${fmt(f*100)}% do inicial, ou seja, ${lab(ch)}. Somar +${a}% com −${b}% é a pegadinha.`,
    x:k=>lab(r2(ch+k))};
@@ -963,7 +1082,7 @@ const GENS=[
 {id:'jc',topic:'mt-porcentagem',f:r=>{
   const C=r.pick([1000,2000,2500,4000,5000,8000,10000]), i=r.pick([2,3,4,5,10]);
   const M=r2(C*Math.pow(1+i/100,2)), S1=r2(C*(1+2*i/100));
-  return {q:`Uma pessoa aplicou ${brl(C)} a juros compostos de ${i}% ao mês, sem fazer novos depósitos nem saques. Qual será o montante depois de 2 meses?`,
+  return {tb:`<p>Para juntar dinheiro, uma pessoa aplicou ${brl(C)} em um investimento que rende juros compostos de ${i}% ao mês. Ela não fará novos depósitos nem saques.</p>`, cmd:`Depois de 2 meses, o montante dessa aplicação será de`,
    c:brl(M), d:[brl(S1),brl(r2(C*(1+i/100))),brl(r2(M-C)),brl(r2(C*Math.pow(1+i/100,3)))],
    e:`M = ${fmt(C)} × ${fmt(1+i/100)}² = ${fmt(C)} × ${fmt(Math.pow(1+i/100,2),4)} = ${brl(M)}. Com juros simples seriam ${brl(S1)}, que é a alternativa-pegadinha.`,
    x:k=>brl(r2(M+k*10))};
@@ -971,7 +1090,7 @@ const GENS=[
 {id:'escala',topic:'mt-proporcao',f:r=>{
   const k=r.pick([25000,50000,100000,200000,250000,500000]), d=r.pick([2,3,4,5,6,7,8,12]);
   const cm=d*k, km=cm/100000;
-  return {q:`Em um mapa na escala 1 : ${fmt(k,0)}, a distância entre duas cidades é de ${d} cm. Qual é a distância real entre elas?`,
+  return {tb:`<p>Para planejar uma viagem, uma família consultou um mapa na escala 1 : ${fmt(k,0)}. Nele, a distância em linha reta entre duas cidades é de ${d} cm.</p>`, cmd:`A distância real, em linha reta, entre as duas cidades é de`,
    c:`${fmt(km,3)} km`, d:[`${fmt(km*10,3)} km`,`${fmt(km/10,3)} km`,`${fmt(km*100,3)} km`,`${fmt(km/100,3)} km`],
    e:`${d} × ${fmt(k,0)} = ${fmt(cm,0)} cm. Como 1 km = 100.000 cm, a distância real é ${fmt(cm,0)} ÷ 100.000 = ${fmt(km,3)} km.`,
    x:j=>`${fmt(km+j,3)} km`};
@@ -984,7 +1103,7 @@ const GENS=[
     if(cands.length){w1=a;d1=b;tot=tt;w2=r.pick(cands);break;}
   }
   const d2=tot/w2;
-  return {q:`${w1} operários concluem uma obra em ${d1} dias. Trabalhando no mesmo ritmo, em quantos dias ${w2} operários concluiriam a mesma obra?`,
+  return {tb:`<p>Uma construtora estimou que ${w1} operários concluem uma obra em ${d1} dias. Para mudar o prazo, a empresa decidiu trabalhar com ${w2} operários, todos no mesmo ritmo.</p>`, cmd:`Com essa equipe, a obra será concluída em`,
    c:`${fmt(d2)} dias`, d:[`${fmt(r2(d1*w2/w1))} dias`,`${d1} dias`,`${fmt(d2+2)} dias`,`${fmt(Math.abs(d1-(w2-w1))||1)} dias`],
    e:`Mais operários, menos dias: é uma proporção inversa. ${w1} × ${d1} = ${w2} × d, então d = ${tot} ÷ ${w2} = ${fmt(d2)} dias.`,
    x:k=>`${fmt(d2+k+2)} dias`};
@@ -994,7 +1113,7 @@ const GENS=[
   const m=r.int(1,8), pool=shuffleR([0,1,2,3,4,5,6,7,8,9,10].filter(v=>v!==m),r).slice(0,4);
   const list=shuffleR([m,m,m,...pool],r), sorted=list.slice().sort((a,b)=>a-b), med=sorted[3];
   const mean=list.reduce((s,v)=>s+v,0)/7, op=(a,b)=>`${fmt(a,1)} e ${fmt(b,1)}`;
-  return {q:`${ctx}: ${list.join(', ')}. A mediana e a moda desses valores são, respectivamente,`,
+  return {tb:`<p>${ctx}: ${list.join(', ')}.</p>`, cmd:`A mediana e a moda desses valores são, respectivamente,`,
    c:op(med,m), d:[op(list[3],m),op(r2(mean),m),op(m,med),op(med,sorted[6]),op(sorted[6]-sorted[0],m)],
    e:`Em ordem: ${sorted.join(', ')}. O valor do meio (o 4º) é ${med}, então a mediana é ${med}. O valor que mais se repete é ${m}: essa é a moda.`,
    x:k=>op(med+k,m)};
@@ -1002,7 +1121,7 @@ const GENS=[
 {id:'ponderada',topic:'mt-estatistica',f:r=>{
   const w=[r.int(1,3),r.int(1,3),r.int(1,3)], n=[r.int(4,10),r.int(4,10),r.int(4,10)];
   const sw=w[0]+w[1]+w[2], soma=n[0]*w[0]+n[1]*w[1]+n[2]*w[2], res=soma/sw, simples=(n[0]+n[1]+n[2])/3;
-  return {q:`Num processo seletivo, a nota final é a média ponderada de três provas: Matemática (peso ${w[0]}), Português (peso ${w[1]}) e Redação (peso ${w[2]}). Um candidato tirou ${n[0]}, ${n[1]} e ${n[2]}, respectivamente. Qual foi a nota final, aproximadamente?`,
+  return {tb:`<p>O edital de um processo seletivo informa que a nota final é a média ponderada de três provas: Matemática (peso ${w[0]}), Português (peso ${w[1]}) e Redação (peso ${w[2]}). Um candidato tirou ${n[0]}, ${n[1]} e ${n[2]}, respectivamente.</p>`, cmd:`A nota final desse candidato é, aproximadamente,`,
    c:fmt(res,2), d:[fmt(simples,2),fmt(soma/3,2),fmt(res+0.5,2),fmt(res-0.5,2)],
    e:`(${n[0]} × ${w[0]} + ${n[1]} × ${w[1]} + ${n[2]} × ${w[2]}) ÷ (${w[0]} + ${w[1]} + ${w[2]}) = ${soma} ÷ ${sw} ≈ ${fmt(res,2)}. A média simples, sem os pesos, daria ${fmt(simples,2)}.`,
    x:k=>fmt(res+k*0.3,2)};
@@ -1011,14 +1130,14 @@ const GENS=[
   const c=r.pick([2,3,4,5,6,8]), l=r.pick([1,1.5,2,2.5,3]), h=r.pick([0.5,1,1.2,1.5,2]);
   const ctx=r.pick([`Uma caixa-d'água`,'Um reservatório','Uma piscina','Um tanque de peixes']);
   const V=Math.round(c*l*h*1000)/1000, Lt=Math.round(V*1000);
-  return {q:`${ctx} tem forma de paralelepípedo, com medidas internas de ${fmt(c)} m de comprimento, ${fmt(l)} m de largura e ${fmt(h)} m de altura. Qual é a sua capacidade, em litros?`,
+  return {tb:`<p>${ctx} tem forma de paralelepípedo, com medidas internas de ${fmt(c)} m de comprimento, ${fmt(l)} m de largura e ${fmt(h)} m de altura.</p>`, cmd:`A capacidade desse reservatório, em litros, é de`,
    c:`${fmt(Lt,0)} litros`, d:[`${fmt(V,3)} litros`,`${fmt(Lt*10,0)} litros`,`${fmt(Lt/10,0)} litros`,`${fmt((c+l+h)*1000,0)} litros`],
    e:`V = ${fmt(c)} × ${fmt(l)} × ${fmt(h)} = ${fmt(V,3)} m³. Como 1 m³ = 1.000 L, a capacidade é de ${fmt(Lt,0)} litros.`,
    x:k=>`${fmt(Lt+k*500,0)} litros`};
 }},
 {id:'lata',topic:'mt-volumes',f:r=>{
   const rr=r.pick([2,3,4,5,6]), h=r.pick([5,8,10,12,15,20]), V=3*rr*rr*h;
-  return {q:`Uma lata cilíndrica tem ${2*rr} cm de diâmetro na base e ${h} cm de altura. Usando π = 3, qual é a capacidade da lata?`,
+  return {tb:`<p>Uma indústria vai produzir latas cilíndricas com ${2*rr} cm de diâmetro na base e ${h} cm de altura. Nos cálculos, a empresa usa π = 3.</p>`, cmd:`A capacidade de cada lata é de`,
    c:`${fmt(V,0)} mL`, d:[`${fmt(12*rr*rr*h,0)} mL`,`${fmt(6*rr*h,0)} mL`,`${fmt(V/3,0)} mL`,`${fmt(V*2,0)} mL`],
    e:`O raio é a metade do diâmetro: ${rr} cm. V = 3 × ${rr}² × ${h} = ${fmt(V,0)} cm³, ou seja, ${fmt(V,0)} mL. Usar o diâmetro como se fosse o raio daria ${fmt(12*rr*rr*h,0)} mL.`,
    x:k=>`${fmt(V+k*30,0)} mL`};
@@ -1026,7 +1145,7 @@ const GENS=[
 {id:'consumo',topic:'cn-eletricidade',f:r=>{
   const ap=r.pick([['chuveiro elétrico',[4000,4400,5000,5500,6000]],['ferro de passar',[1000,1200,1500]],['secador de cabelo',[1000,1500,2000]],['forno elétrico',[1500,2000,2500,3000]]]);
   const P=r.pick(ap[1]), min=r.pick([10,15,20,30,40,45,60]), kwh=r2(P/1000*min/60*30);
-  return {q:`Um ${ap[0]} de ${fmt(P,0)} W fica ligado ${min} minutos por dia. Qual é o consumo de energia desse aparelho em 30 dias?`,
+  return {tb:`<p>Para economizar na conta de luz, uma família analisou o uso de um ${ap[0]} de ${fmt(P,0)} W, que fica ligado, em média, ${min} minutos por dia.</p>`, cmd:`O consumo de energia desse aparelho em 30 dias é de`,
    c:`${fmt(kwh)} kWh`, d:[`${fmt(r2(P/1000*min*30))} kWh`,`${fmt(r2(kwh/30))} kWh`,`${fmt(r2(kwh*2))} kWh`,`${fmt(r2(P*min/60*30),0)} kWh`],
    e:`${fmt(P,0)} W = ${fmt(P/1000)} kW, e ${min} min = ${min} ÷ 60 h. Em 30 dias: ${fmt(P/1000)} × (${min} ÷ 60) × 30 = ${fmt(kwh)} kWh. Esquecer de converter os minutos em horas daria ${fmt(r2(P/1000*min*30))} kWh.`,
    x:k=>`${fmt(r2(kwh+k*3))} kWh`};
@@ -1035,14 +1154,14 @@ const GENS=[
   const ap=r.pick([['televisor',[80,100,150]],['computador',[150,200,300]],['ventilador',[60,100,130]],['videogame',[100,150,200]]]);
   const P=r.pick(ap[1]), hrs=r.pick([2,3,4,5,6,8]), tar=r.pick([0.7,0.75,0.8,0.9,1]);
   const kwh=r2(P/1000*hrs*30), cost=r2(kwh*tar);
-  return {q:`Um ${ap[0]} de ${P} W fica ligado ${hrs} horas por dia, durante 30 dias. Com tarifa de ${brl(tar)} por kWh, quanto esse aparelho acrescenta à conta de luz?`,
+  return {tb:`<p>Em uma residência, um ${ap[0]} de ${P} W fica ligado ${hrs} horas por dia. A tarifa de energia cobrada pela distribuidora é de ${brl(tar)} por kWh.</p>`, cmd:`Em 30 dias, esse aparelho acrescenta à conta de luz o valor de`,
    c:brl(cost), d:[brl(r2(cost/30)),brl(kwh),brl(r2(cost*10)),brl(r2(P*hrs*tar))],
    e:`E = ${fmt(P/1000,3)} kW × ${hrs} h × 30 = ${fmt(kwh)} kWh. Custo: ${fmt(kwh)} × ${fmt(tar)} = ${brl(cost)}.`,
    x:k=>brl(r2(cost+k*1.5))};
 }},
 {id:'corrente',topic:'cn-eletricidade',f:r=>{
   const U=r.pick([127,220]), I=r.pick([2,3,5,6,8,10,12,15,20]), P=U*I, outra=U===127?220:127;
-  return {q:`Um aparelho elétrico de ${fmt(P,0)} W funciona em uma tomada de ${U} V. Qual é a corrente elétrica que passa por ele?`,
+  return {tb:`<p>A etiqueta de um aparelho elétrico informa a potência de ${fmt(P,0)} W. O aparelho será ligado em uma tomada de ${U} V.</p>`, cmd:`A corrente elétrica que vai passar pelo aparelho é de`,
    c:`${I} A`, d:[`${fmt(P/outra,1)} A`,`${I*2} A`,`${fmt(I/2,1)} A`,`${fmt(P*U,0)} A`],
    e:`Como P = U × i, a corrente é i = P ÷ U = ${fmt(P,0)} ÷ ${U} = ${I} A.`,
    x:k=>`${I+k} A`};
@@ -1050,7 +1169,7 @@ const GENS=[
 {id:'conc',topic:'cn-quimica',f:r=>{
   const m=r.pick([5,10,12,15,20,24,30,40,45,60]), V=r.pick([100,200,250,400,500]), sol=r.pick(['sal','açúcar','bicarbonato de sódio']);
   const C=r2(m/(V/1000));
-  return {q:`Uma solução foi preparada dissolvendo ${m} g de ${sol} em água até completar ${V} mL. Qual é a concentração dessa solução?`,
+  return {tb:`<p>Em uma aula prática, um estudante dissolveu ${m} g de ${sol} em água e completou o volume até ${V} mL de solução.</p>`, cmd:`A concentração dessa solução é de`,
    c:`${fmt(C)} g/L`, d:[`${fmt(m/V,3)} g/L`,`${fmt(r2(C/10))} g/L`,`${fmt(r2(C*10))} g/L`,`${fmt(r2(m*V/1000))} g/L`],
    e:`${V} mL = ${fmt(V/1000,2)} L. C = ${m} ÷ ${fmt(V/1000,2)} = ${fmt(C)} g/L.`,
    x:k=>`${fmt(r2(C+k*5))} g/L`};
@@ -1058,24 +1177,27 @@ const GENS=[
 {id:'dil',topic:'cn-quimica',f:r=>{
   const C1=r.pick([20,40,50,60,80,100,120]), V1=r.pick([100,200,250,500]), V2=r.pick([1,2]);
   const C2=r2(C1*V1/1000/V2);
-  return {q:`Uma pessoa tem ${V1} mL de um suco concentrado com ${C1} g/L de açúcar e acrescenta água até completar ${V2} L. Qual é a nova concentração de açúcar?`,
+  return {tb:`<p>Uma pessoa colocou em uma jarra ${V1} mL de um suco concentrado que tem ${C1} g/L de açúcar e completou com água até ${V2} L.</p>`, cmd:`A concentração de açúcar no suco pronto é de`,
    c:`${fmt(C2)} g/L`, d:[`${fmt(r2(C1/V2))} g/L`,`${fmt(r2(C2*10))} g/L`,`${fmt(r2(C1*V1/V2),0)} g/L`,`${fmt(r2(C2/2))} g/L`],
    e:`A massa de açúcar não muda: C₁ × V₁ = C₂ × V₂. ${C1} × ${fmt(V1/1000,2)} = C₂ × ${V2}, então C₂ = ${fmt(C2)} g/L.`,
    x:k=>`${fmt(r2(C2+k*2))} g/L`};
 }},
 {id:'metano',topic:'cn-quimica',f:r=>{
   const k=r.pick([0.5,1,1.5,2,3,4,5]);
-  return {q:`Na combustão completa do metano, CH₄ + 2 O₂ → CO₂ + 2 H₂O. Dadas as massas molares CH₄ = 16 g/mol e CO₂ = 44 g/mol, qual é a massa de CO₂ produzida na queima de ${fmt(16*k)} g de metano?`,
+  return {tb:`<p>O metano, principal componente do gás natural, queima segundo a equação:</p><p>CH₄ + 2 O₂ → CO₂ + 2 H₂O</p><p>Massas molares: CH₄ = 16 g/mol; CO₂ = 44 g/mol.</p>`, cmd:`Na queima completa de ${fmt(16*k)} g de metano, a massa de CO₂ produzida é de`,
    c:`${fmt(44*k)} g`, d:[`${fmt(16*k)} g`,`${fmt(22*k)} g`,`${fmt(88*k)} g`,`${fmt(44*k+16)} g`],
    e:`${fmt(16*k)} g de CH₄ correspondem a ${fmt(k)} mol. A proporção é de 1 CH₄ para 1 CO₂, então formam-se ${fmt(k)} mol de CO₂: ${fmt(k)} × 44 = ${fmt(44*k)} g.`,
    x:j=>`${fmt(44*k+j*11)} g`};
 }},
 {id:'cruz',topic:'cn-genetica',f:r=>{
-  const tr=r.pick([{org:'ervilhas',dom:'a cor amarela',rec:'a cor verde',U:'V',l:'v',ev:'ter sementes verdes'},{org:'porquinhos-da-índia',dom:'a pelagem preta',rec:'a pelagem branca',U:'B',l:'b',ev:'ter pelagem branca'},{org:'seres humanos',dom:'a pigmentação normal',rec:'o albinismo',U:'A',l:'a',ev:'ser albino'}]);
+  const tr=r.pick([
+    {org:'ervilhas',dom:'a cor amarela das sementes',rec:'a cor verde',U:'V',l:'v',ev:'ter sementes verdes',desc:'um descendente',cx:(g1,g2)=>`Em um experimento, um estudante cruzou uma planta ${g1} com outra planta ${g2}.`},
+    {org:'porquinhos-da-índia',dom:'a pelagem preta',rec:'a pelagem branca',U:'B',l:'b',ev:'ter pelagem branca',desc:'um filhote',cx:(g1,g2)=>`Um criador cruzou um animal ${g1} com outro animal ${g2}.`},
+    {org:'seres humanos',dom:'a pigmentação normal',rec:'o albinismo',U:'A',l:'a',ev:'ser albino',desc:'um filho',cx:(g1,g2)=>`Um casal em que uma pessoa é ${g1} e a outra é ${g2} procurou um serviço de aconselhamento genético.`}]);
   const gts=[tr.U+tr.U,tr.U+tr.l,tr.l+tr.l], pa=[0,0.5,1];
   let i1=1,i2=1; for(let t=0;t<10;t++){i1=r.int(0,2);i2=r.int(0,2); if(!(i1===0&&i2===0)) break;}
   const p=pa[i1]*pa[i2], fr=v=>v===0?'0':v===0.25?'1/4':v===0.5?'1/2':'1', pc=v=>`${fmt(v*100,0)}%`;
-  return {q:`Em ${tr.org}, ${tr.dom} (${tr.U}) é dominante sobre ${tr.rec} (${tr.l}). Do cruzamento de um indivíduo ${gts[i1]} com outro ${gts[i2]}, qual é a probabilidade de um descendente ${tr.ev}?`,
+  return {tb:`<p>Em ${tr.org}, ${tr.dom} (${tr.U}) é dominante sobre ${tr.rec} (${tr.l}). ${tr.cx(gts[i1],gts[i2])}</p>`, cmd:`A probabilidade de ${tr.desc} ${tr.ev} é de`,
    c:pc(p), d:['0%','25%','50%','75%','100%'],
    e:`Para ${tr.ev}, o descendente precisa receber o alelo ${tr.l} dos dois pais. A chance de ${gts[i1]} passar ${tr.l} é ${fr(pa[i1])}, e a de ${gts[i2]} é ${fr(pa[i2])}. Multiplicando: ${fr(pa[i1])} × ${fr(pa[i2])} = ${fr(p)}, ou ${pc(p)}.`,
    x:()=>null};
@@ -1085,7 +1207,7 @@ const GENS=[
   const nomes=['produtor','consumidor primário','consumidor secundário','consumidor terciário','consumidor quaternário'];
   const j=r.int(0,ch.length-1), art=ch[j][0], org=ch[j][1];
   const opts=j===4?nomes:['produtor','consumidor primário','consumidor secundário','consumidor terciário','decompositor'];
-  return {q:`Observe a cadeia alimentar: ${ch.map(x=>x[1]).join(' → ')}. Nessa cadeia, qual é a posição ocupada por ${art} ${org}?`,
+  return {tb:`<p>Em um estudo de campo, estudantes registraram a seguinte cadeia alimentar:</p><p>${ch.map(x=>x[1]).join(' → ')}</p>`, cmd:`Nessa cadeia, a posição ocupada por ${art} ${org} é a de`,
    c:nomes[j], d:opts,
    e:`O primeiro ser da cadeia (${ch[0][1]}) é o produtor. A partir dele, cada nível é um consumidor: ${ch.slice(1).map((x,k)=>`${x[1]} (${nomes[k+1].replace('consumidor ','')})`).join(', ')}. Por isso, a posição de ${art} ${org} é: ${nomes[j]}.`,
    x:()=>null};
@@ -1096,7 +1218,7 @@ function gerar(g,seed){
   const out=g.f(R(seed)), seen=new Set([out.c]), o=[out.c];
   for(const x of out.d){ if(o.length>=5) break; if(x&&!seen.has(x)){seen.add(x);o.push(x);} }
   for(let k=1;o.length<5&&k<60;k++){ const x=out.x(k); if(x&&!seen.has(x)){seen.add(x);o.push(x);} }
-  return {id:`g-${g.id}-${seed}`,q:out.q,o,a:0,e:out.e,topic:TMAP[g.topic],gen:1,m:0};
+  return {id:`g-${g.id}-${seed}`,q:enemQ(out.tb,out.cmd),o,a:0,e:out.e,topic:TMAP[g.topic],gen:1,m:1};
 }
 function getQ(id){
   if(QMAP[id]) return QMAP[id];
@@ -1151,7 +1273,7 @@ function viewHome(){
   <header class="hero">
     <p class="eyebrow">Exame Nacional do Ensino Médio</p>
     <h1 class="brand">Revisa <span class="hl">ENEM</span></h1>
-    <p class="lede">Os assuntos que mais caem, com questões novas todo dia, videoaulas no SmartTube, resumos narrados e repertório para a redação. Sem anúncios.</p>
+    <p class="lede">Os assuntos que mais caem, com questões no modelo ENEM que mudam todo dia, videoaulas no SmartTube, resumos narrados e repertório para a redação. Sem anúncios.</p>
   </header>
   <section class="stats" aria-label="Seu progresso">
     <div><b>${total}</b><span>questões respondidas</span></div>
@@ -1168,7 +1290,7 @@ function viewHome(){
     <div class="quick">
       <a class="btn primary" id="goHoje" href="#">Questões de hoje</a>
       <a class="btn" id="goLivre" href="#">Sorteio novo</a>
-      <a class="btn" id="goEnem" href="#">Só modelo ENEM</a>
+      <a class="btn" id="goEnem" href="#">Simulado com 45 questões</a>
     </div>
     <p class="hojeinfo" id="hojeInfo"></p>
   </section>
@@ -1182,7 +1304,7 @@ function viewHome(){
   ${[1,2].map(d=>`<section class="day"><h2>${d}º dia de prova</h2><div class="areas">${AREAS.filter(a=>a.dia===d).map(areaCard).join('')}</div></section>`).join('')}
   <footer class="note">
     <p>As videoaulas são de canais do YouTube e abrem no SmartTube depois da configuração. Os resumos são narrados pela voz do próprio aparelho: se não ouvir nada, confira o volume.</p>
-    <p>As questões seguem o estilo do ENEM e foram escritas para este app. Para treinar com as provas oficiais, use as <a href="https://www.gov.br/inep/pt-br/areas-de-atuacao/avaliacao-e-exames-educacionais/enem/provas-e-gabaritos" target="_blank" rel="noopener">provas anteriores no site do Inep</a>.</p>
+    <p>Todas as questões seguem o modelo do ENEM (texto-base, comando e cinco alternativas) e foram escritas para este app. Para treinar com as provas oficiais, use as <a href="https://www.gov.br/inep/pt-br/areas-de-atuacao/avaliacao-e-exames-educacionais/enem/provas-e-gabaritos" target="_blank" rel="noopener">provas anteriores no site do Inep</a>.</p>
     <p>As questões de hoje mudam todo dia. No 2º dia de prova, metade delas é gerada com números novos, e a resolução é calculada pelo próprio app.</p>
     <p>Seu progresso fica salvo neste aparelho.</p>
   </footer>`;
@@ -1196,7 +1318,7 @@ function refreshTreino(){
   app.querySelectorAll('.opb[data-dia]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.dia===p.dia)));
   app.querySelectorAll('.opb[data-n]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.n===p.n)));
   const set=(id,h)=>{const a=document.getElementById(id); if(a) a.setAttribute('href',h);};
-  set('goHoje',`#dia${p.dia}-${p.n}-hoje`); set('goLivre',`#dia${p.dia}-${p.n}-livre`); set('goEnem',`#enem${p.dia}`);
+  set('goHoje',`#dia${p.dia}-${p.n}-hoje`); set('goLivre',`#dia${p.dia}-${p.n}-livre`); set('goEnem',`#dia${p.dia}-45-livre`);
   const r=S.daily[`${hojeStr()}-${p.dia}-${p.n}`]; const el=document.getElementById('hojeInfo'); if(!el) return;
   el.textContent=r?`Você já fez as ${r.tot} questões de hoje do ${p.dia}º dia e acertou ${r.ok}. Amanhã chega outra seleção.`
     :`As questões de hoje mudam todo dia. ${p.dia===2?'No 2º dia, metade delas é gerada com números novos.':'Elas são sorteadas entre Linguagens, Humanas e Redação.'}`;
@@ -1501,7 +1623,7 @@ function renderQuestion(){
   Q.perm=shuffle([0,1,2,3,4]);
   app.innerHTML=`
   <a class="back" href="${Q.back.href}">← ${Q.back.label}</a>
-  <div class="qhead"><span class="chip" data-a="${a.id}">${a.sigla}</span>${q.m?'<span class="tag">Modelo ENEM</span>':''}${q.gen?'<span class="tag">Números novos</span>':''}<span>${q.topic.nome}</span><span class="count">${Q.timed?'<span class="timer" id="timer">00:00</span> · ':''}Questão ${Q.i+1} de ${Q.list.length}</span></div>
+  <div class="qhead"><span class="chip" data-a="${a.id}">${a.sigla}</span>${q.gen?'<span class="tag">Números novos</span>':''}<span>${q.topic.nome}</span><span class="count">${Q.timed?'<span class="timer" id="timer">00:00</span> · ':''}Questão ${Q.i+1} de ${Q.list.length}</span></div>
   <div class="qbar" aria-hidden="true"><i style="width:${Q.i/Q.list.length*100}%"></i></div>
   <article class="question">
     <div class="enun">${q.q}</div>
